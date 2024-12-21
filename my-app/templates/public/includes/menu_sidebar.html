@@ -1,0 +1,72 @@
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+  <div class="app-brand demo">
+    <a href="{{ url_for('inicio') }}" class="app-brand-link">
+      <span class="app-brand-logo demo">
+        <img
+          src="{{ url_for('static', filename ='assets/img/logo.png') }}"
+          alt="Logo"
+        />
+      </span>
+    </a>
+
+    <a
+      href="javascript:void(0);"
+      class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none"
+    >
+      <i class="bx bx-chevron-left bx-sm align-middle"></i>
+    </a>
+  </div>
+
+  <div class="menu-inner-shadow"></div>
+  <ul class="menu-inner py-5">
+    <li
+      class="menu-item {% if request.path == '/interfaz-clave' %} active {% endif %}"
+    >
+      <a href="/interfaz-clave" class="menu-link">
+        <i class="menu-icon bi bi-person-fill-lock"></i>
+        <div data-i18n="Tables">Generar Clave</div>
+      </a>
+    </li>
+    <li
+      class="menu-item {% if request.path == '/reporte-accesos' %} active{%endif%}"
+    >
+      <a href="/reporte-accesos" class="menu-link">
+        <i class="menu-icon bi bi-file-lock-fill"></i>
+        <div data-i18n="Tables">Reporte Accesos</div>
+      </a>
+    </li>
+    {% if dataLogin.rol == 1 %}
+    <li
+      class="menu-item {% if request.path == '/lista-de-areas' %} active{% endif %}"
+    >
+      <a href="/lista-de-areas" class="menu-link">
+        <i class="menu-icon bi bi-person-lines-fill"></i>
+        <div data-i18n="Boxicons">Lista de Áreas</div>
+      </a>
+    </li>
+    {%endif%} {% if dataLogin.rol == 1 %}
+    <li
+      class="menu-item {% if request.path == '/lista-de-usuarios' %} active {% endif %}"
+    >
+      <a href="/lista-de-usuarios" class="menu-link">
+        <i class="menu-icon bi bi-person-lines-fill"></i>
+        <div data-i18n="Tables">Lista de Usuarios</div>
+      </a>
+    </li>
+    {%endif%}
+    <li
+      class="menu-item {% if request.path == '/mi-perfil/{{dataLogin.id}}'%} active {% endif %}"
+    >
+      <a href="/mi-perfil/{{dataLogin.id}}" class="menu-link">
+        <i class="menu-icon bi bi-person-fill-gear"></i>
+        <div data-i18n="Tables">Mi Perfil</div>
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="{{ url_for('cerraSesion') }}" class="menu-link">
+        <i class="menu-icon tf-icons bx bi-box-arrow-right"></i>
+        <div data-i18n="Tables">Salir</div>
+      </a>
+    </li>
+  </ul>
+</aside>

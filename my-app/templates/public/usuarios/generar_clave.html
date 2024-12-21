@@ -1,0 +1,95 @@
+{% extends 'public/base_cpanel.html' %}
+<!---->
+{% block title %}Crear Clave{% endblock %} {% block customCSS %}
+<style>
+  /* Tu código CSS personalizado va aquí */
+  .contenedor {
+    border-style: solid;
+    border-color: rgba(128, 128, 128, 0.3);
+    border-width: 1px;
+    border-radius: 5px;
+  }
+  .campo_clave input {
+    float: left;
+    width: 95%;
+  }
+  .campo_clave button {
+    width: 5%;
+  }
+</style>
+{% endblock %}
+<!---->
+{% block body %}
+<div class="container-xxl">
+  <div class="card">
+    <div class="card-body">
+      <div class="app-brand justify-content-center">
+        <span class="app-brand-logo">
+          <img
+            class="logo"
+            style="display: flex"
+            src="{{ url_for('static', filename ='./assets/img/logo.png') }}"
+            alt="Logo"
+          />
+        </span>
+      </div>
+
+      <form class="mb-3" method="POST">
+        <div class="contenedor mb-3">
+          <label class="form-label"> GENERACION DE CLAVE </label>
+          <div class="campo_clave">
+            <input
+              class="form-control"
+              type="password"
+              name="clave_audi"
+              id="clave_audi"
+              readonly
+            />
+            <button
+              class="btn btn-outline-primary"
+              type="button"
+              id="togglePassword"
+            >
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <button
+            type="button"
+            class="btn btn-secondary w-100"
+            onclick="generacionClave('{{dataLogin.id}}')"
+          >
+            Generar Clave
+            <i class="bi bi-key-fill"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block customJS %}
+<script>
+  function generacionClave(id) {
+    fetch("/generar-y-guardar-clave/"+id) // Ruta para generar la clave
+      .then((response) => response.text())
+      .then((data) => {
+        document.getElementById("clave_audi").value = data.trim(); // Actualiza el valor del campo con la clave generada
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  }
+
+  // MOSTRAR Y OCULTAR CONSTRASEÑA
+  document
+    .getElementById("togglePassword")
+    .addEventListener("click", function () {
+      const claveField = document.getElementById("clave_audi");
+      const type =
+        claveField.getAttribute("type") === "password" ? "text" : "password";
+      claveField.setAttribute("type", type);
+    });
+</script>
+{% endblock %}
