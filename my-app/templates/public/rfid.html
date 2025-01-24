@@ -1,0 +1,50 @@
+{% extends 'public/base_cpanel.html' %}
+
+{% block title %}Monitor de RFID | Sensor Data{% endblock %}
+
+{% block body %}
+<div class="card content_consignaciones" style="border-radius: 0px !important">
+  <section id="datosRFID">
+    <h2 class="text-center mt-5 mb-5">
+      Registro de Tarjetas RFID
+      <hr />
+    </h2>
+
+    <div class="table-responsive text-nowrap">
+      <table class="table table-hover">
+        <thead>
+          <tr style="background-color: #ddd">
+            <th>ID</th>
+            <th>UID Tarjeta</th>
+            <th>Estado</th>
+            <th>Cedula</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for registro in datos_rfid %}
+          <tr>
+            <td>{{ registro.id }}</td>
+            <td>{{ registro.uid_tarjeta }}</td>
+            <td>{{ registro.estado }}</td>
+            <td>{{ registro.cedula }}</td>
+            <td>{{ registro.fecha }}</td>
+            <td>{{ registro.hora }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block customJS %}
+<script>
+  // Función para actualizar los datos automáticamente (simulación)
+  setInterval(function() {
+    location.reload();
+  }, 60000); // Actualiza cada minuto
+</script>
+{% endblock %}

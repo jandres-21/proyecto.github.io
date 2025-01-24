@@ -25,6 +25,9 @@
             <th>Nombre</th>
             <th>Área</th>
             <th>Rol</th>
+            <th>Tarjeta</th>
+            <th>Estado</th>
+            <th>Genero</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -47,6 +50,9 @@
               {%endif%}
               {%endfor%}
             </td>
+            <td>{{ usuario.tarjeta}} </td> 
+            <td>{{ usuario.estado}} </td>
+            <td>{{ usuario.genero}} </td>  
             <td>
               <a
                   href="/mi-perfil/{{usuario.id_usuario}}"

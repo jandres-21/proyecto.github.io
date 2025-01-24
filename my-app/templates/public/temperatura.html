@@ -1,0 +1,46 @@
+{% extends 'public/base_cpanel.html' %}
+
+{% block title %}Monitor de Temperatura 🌡️ | Sensor Data{% endblock %}
+
+{% block body %}
+<div class="card content_consignaciones" style="border-radius: 0px !important">
+  <section id="datosTemperatura">
+    <h2 class="text-center mt-5 mb-5">
+      Registro de Temperatura
+      <hr />
+    </h2>
+
+    <div class="table-responsive text-nowrap">
+      <table class="table table-hover">
+        <thead>
+          <tr style="background-color: #ddd">
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Temperatura (°C)</th>
+            <th>Ubicación</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for registro in datos_temperatura %}
+          <tr>
+            <td>{{ registro.id_temperatura }}</td>
+            <td>{{ registro.fecha }}</td>
+            <td>{{ registro.temperatura }} °C</td>
+            <td>{{ registro.ubicacion or 'N/A' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block customJS %}
+<script>
+  // Función para actualizar los datos automáticamente (simulación)
+  setInterval(function() {
+    location.reload();
+  }, 60000); // Actualiza cada minuto
+</script>
+{% endblock %}
