@@ -1,0 +1,94 @@
+import serial
+import mysql.connector
+import time
+from datetime import datetime
+
+def connectionBD():
+    print("Intentando conectar a la base de datos...")
+    try:
+        connection = mysql.connector.connect(
+            host="junction.proxy.rlwy.net",
+            port=21594,
+            user="root",
+            passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",
+            database="railway",
+            charset='utf8mb4',
+            collation='utf8mb4_unicode_ci',
+            raise_on_warnings=True
+        )
+        if connection.is_connected():
+            print("Conexión exitosa a la BD")
+            return connection
+    except mysql.connector.Error as error:
+        print(f"No se pudo conectar: {error}")
+        return None
+
+def main():
+    db_connection = connectionBD()
+    cursor = db_connection.cursor() if db_connection else None
+
+    try:
+        ser = serial.Serial('COM3', 9600, timeout=1)  # Ajusta el timeout según sea necesario
+        time.sleep(2)
+        ser.reset_input_buffer()  # Limpia el buffer del puerto serie
+        print("Conexión serie establecida.")
+
+        while True:
+            try:
+                if ser.in_waiting > 0:
+                    raw_uid = ser.readline().decode('utf-8').strip()
+                    print(f"Mensaje recibido: {raw_uid}")
+
+                    if "uid de la tarjeta:" in raw_uid.lower():
+                        uid = raw_uid.split(":")[1].strip().lower()
+                        print(f"UID procesado: {uid}")
+
+                        if cursor:
+                            cursor.execute("SELECT * FROM usuarios WHERE LOWER(tarjeta) = %s", (uid,))
+                            result = cursor.fetchone()
+
+                            fecha_actual = datetime.now().strftime('%Y-%m-%d')
+                            hora_actual = datetime.now().strftime('%H:%M:%S')
+
+                            estado_acceso = "permitido" if result else "denegado"
+                            cedula_usuario = result[1] if result else None
+
+                            try:
+                                cursor.execute("""
+                                    INSERT INTO rfid_tarjetas (uid_tarjeta, estado, fecha, hora, cedula)
+                                    VALUES (%s, %s, %s, %s, %s)
+                                """, (uid, estado_acceso, fecha_actual, hora_actual, cedula_usuario))
+                                db_connection.commit()
+
+                                if result:
+                                    print(f"Acceso permitido: {result}")
+                                    ser.write(b'1')
+                                else:
+                                    print("UID no encontrado.")
+                                    ser.write(b'0')
+                            except mysql.connector.Error as sql_error:
+                                print(f"Error al insertar en la BD: {sql_error}")
+
+                            # Mostrar últimos registros
+                            cursor.execute("SELECT * FROM rfid_tarjetas ORDER BY fecha DESC LIMIT 10")
+                            registros_ordenados = cursor.fetchall()
+                            print("Últimos 10 registros:")
+                            for registro in registros_ordenados:
+                                print(registro)
+                    else:
+                        print("Mensaje no contiene un UID válido.")
+            except Exception as e:
+                print(f"Error procesando el ciclo principal: {e}")
+    except serial.SerialException as e:
+        print(f"Error en la conexión serie: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if db_connection:
+            db_connection.close()
+        if ser.is_open:
+            ser.close()
+        print("Conexiones cerradas.")
+
+if __name__ == "__main__":
+    main()

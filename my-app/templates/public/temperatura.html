@@ -1,0 +1,84 @@
+{% extends 'public/base_cpanel.html' %}
+{% block title %}Temperaturas Registradas{% endblock %}
+{% block body %}
+
+<!-- Mostrar la última temperatura registrada -->
+{% if datos_temperatura %}
+<div class="alert alert-info"><h4>Temperatura Actual {{ datos_temperatura[0]['temperatura'] }}°C</h4></div>
+
+{% else %}
+  <div class="alert alert-warning">
+    <p>No se han registrado temperaturas recientes.</p>
+  </div>
+{% endif %}
+
+<!-- Tabla de registros de temperaturas -->
+<div class="card">
+  <div class="card-body">
+    <h5>Registros de Temperatura</h5>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Temperatura (°C)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for temperatura in datos_temperatura %}
+          <tr>
+            <td>{{ temperatura['fecha'] }}</td>
+            <td>{{ temperatura['temperatura'] }}°C</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Paginación -->
+    <nav aria-label="Page navigation">
+      <ul class="pagination">
+        {% if page > 1 %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('temperatura', page=1) }}" aria-label="First">
+              <span aria-hidden="true">&laquo;&laquo;</span>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('temperatura', page=page-1) }}" aria-label="Previous">
+              <span aria-hidden="true">&laquo;</span>
+            </a>
+          </li>
+        {% endif %}
+
+        {% for i in range(1, total_paginas + 1) %}
+          {% if i <= 3 %}
+            <li class="page-item {% if i == page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('temperatura', page=i) }}">{{ i }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page < total_paginas %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('temperatura', page=page+1) }}" aria-label="Next">
+              <span aria-hidden="true">&raquo;</span>
+            </a>
+          </li>
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('temperatura', page=total_paginas) }}" aria-label="Last">
+              <span aria-hidden="true">&raquo;&raquo;</span>
+            </a>
+          </li>
+        {% endif %}
+
+        {% if total_paginas > 3 %}
+          <li class="page-item disabled">
+            <span class="page-link">...</span>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+
+  </div>
+</div>
+
+{% endblock %}
