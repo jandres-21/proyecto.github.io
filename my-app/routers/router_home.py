@@ -97,15 +97,19 @@ def updateArea():
             return "Hubo un error al actualizar el área."
 
     return redirect(url_for('lista_areas'))
-def obtenerDatosTemperatura():
+def obtenerDatosTemperatura(page=1, per_page=15):
     try:
         # Establecer conexión a la base de datos
         connection = connectionBD()
         
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
-            # Consulta SQL para obtener los registros de temperatura
-            query = "SELECT * FROM temperatura ORDER BY fecha DESC LIMIT 10;"  # Últimos 10 registros
+            
+            # Calcular el OFFSET para la paginación
+            offset = (page - 1) * per_page
+            
+            # Consulta SQL para obtener los registros de temperatura con paginación
+            query = f"SELECT * FROM temperatura ORDER BY fecha DESC LIMIT {per_page} OFFSET {offset};"
             cursor.execute(query)
             
             # Obtener los resultados
@@ -118,37 +122,39 @@ def obtenerDatosTemperatura():
     except mysql.connector.Error as error:
         print(f"Error al obtener los datos de temperatura: {error}")
         return []
-# RUTA PARA MOSTRAR TEMPERATURA
+
+
+# Modificamos la ruta para manejar la paginación
 @app.route("/temperatura", methods=['GET'])
 def temperatura():
     if 'conectado' in session:
-        # Obtener los datos de temperatura desde la base de datos (función ya definida en otro archivo)
-        datos_temperatura = obtenerDatosTemperatura()  # Esta función debe devolver los datos de temperatura
-        return render_template('public/temperatura.html', datos_temperatura=datos_temperatura, dataLogin=dataLoginSesion())
+        # Obtener el número de página desde la URL, por defecto es la página 1
+        page = request.args.get('page', 1, type=int)
+        
+        # Obtener los datos de temperatura desde la base de datos con paginación
+        datos_temperatura = obtenerDatosTemperatura(page=page)  # Esta función debe devolver los datos de temperatura
+        
+        # Obtener el total de registros para la paginación
+        connection = connectionBD()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) AS total FROM temperatura;")
+        total_registros = cursor.fetchone()['total']
+        cursor.close()
+        connection.close()
+        
+        # Calcular el número total de páginas
+        per_page = 15
+        total_paginas = (total_registros // per_page) + (1 if total_registros % per_page > 0 else 0)
+        
+        return render_template('public/temperatura.html', 
+                               datos_temperatura=datos_temperatura, 
+                               total_paginas=total_paginas, 
+                               page=page, 
+                               dataLogin=dataLoginSesion())
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
-def obtenerDatosRFID():
-    try:
-        # Establecer conexión a la base de datos
-        connection = connectionBD()
-        
-        if connection.is_connected():
-            cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
-            # Consulta SQL para obtener los registros de tarjetas RFID
-            query = "SELECT * FROM rfid_tarjetas ORDER BY fecha DESC LIMIT 10;"  # Últimos 10 registros
-            cursor.execute(query)
-            
-            # Obtener los resultados
-            datos = cursor.fetchall()
-            cursor.close()  # Cerrar cursor
-            connection.close()  # Cerrar conexión
-            
-            return datos
-    
-    except mysql.connector.Error as error:
-        print(f"Error al obtener los datos de RFID: {error}")
-        return []
+
 
 def obtenerDatosSensoresHumo():
     try:
@@ -193,3 +199,4 @@ def sensores_humo():
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
+

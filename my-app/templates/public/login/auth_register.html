@@ -19,7 +19,8 @@
           <form
             class="mb-3"
             action="{{ url_for('cpanelRegisterUserBD') }}"
-            method="POST">
+            method="POST"
+            onsubmit="return validateForm()">
             <div class="mb-3">
               <label for="cedula" class="form-label">
                 Cedula
@@ -28,8 +29,12 @@
                 type="text"
                 class="form-control"
                 name="cedula"
+                id="cedula"
                 required
                 autofocus />
+              <div class="text-danger" id="cedulaError" style="display:none;">
+                La cédula debe tener 10 dígitos numéricos.
+              </div>
             </div>
             <div class="row">
               <div class="mb-3 col-md-6">
@@ -40,8 +45,12 @@
                   type="text"
                   class="form-control"
                   name="name"
+                  id="name"
                   required
                   autofocus />
+                <div class="text-danger" id="nameError" style="display:none;">
+                  El nombre solo puede contener letras.
+                </div>
               </div>
               <div class="mb-3 col-md-6">
                 <label for="name_surname" class="form-label">
@@ -51,8 +60,12 @@
                   type="text"
                   class="form-control"
                   name="surname"
+                  id="surname"
                   required
                   autofocus />
+                <div class="text-danger" id="surnameError" style="display:none;">
+                  El apellido solo puede contener letras.
+                </div>
               </div>
               <div class="mb-3 col-md-6">
                 <label for="tarjeta" class="form-label">
@@ -62,8 +75,11 @@
                   type="text"
                   class="form-control"
                   name="tarjeta"
+                  id="tarjeta"
                   required
                   autofocus />
+                <!-- Botón para leer tarjeta RFID -->
+                <button type="button" id="readRFID" class="btn btn-secondary mt-2">Leer tarjeta RFID</button>
               </div>
             </div>
             <div class="row">
@@ -71,23 +87,21 @@
                 <label for="genero" class="form-label">
                   Género
                 </label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="genero"
-                  required
-                  autofocus />
+                <select class="form-select" name="genero" required>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Femenino">Femenino</option>
+                </select>
               </div>
               <div class="mb-3 col-md-6">
                 <label for="estado" class="form-label">
-                  Estado
+                  Estado Civil
                 </label>
-                <input
-                  type="text"
-                  class="form-control"
-                  name="estado"
-                  required
-                  autofocus />
+                <select class="form-select" name="estado" required>
+                  <option value="Casado">Casado</option>
+                  <option value="Soltero">Soltero</option>
+                  <option value="Viudo">Viudo</option>
+                  <option value="Divorciado">Divorciado</option>
+                </select>
               </div>
             </div>
             <div class="row">
@@ -99,7 +113,7 @@
                   {%endfor%}
                 </select>
               </div>
-              <div class="mt-3 col-md-6" >
+              <div class="mt-3 col-md-6">
                 <label for="rol" class="form-label">Rol</label>
                 <select class="form-select" name="selectRol" {%if dataLogin.rol == 2 %} disabled {%endif%}>
                   {% for rol in roles%}
@@ -109,7 +123,7 @@
               </div>
             </div>
 
-            
+            <!-- Campos de contraseña -->
             <div class="mb-3 form-password-toggle mt-3">
               <label class="form-label" for="pass_user">Clave</label>
               <div class="input-group input-group-merge">
@@ -125,8 +139,33 @@
                   <i class="bx bx-hide"></i>
                 </span>
               </div>
+              <div class="text-danger" id="passwordError" style="display:none;">
+                La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un carácter especial.
+              </div>
             </div>
-            <button class="btn btn-primary w-100">
+            
+            <!-- Campo de repetir contraseña -->
+            <div class="mb-3 form-password-toggle mt-3">
+              <label class="form-label" for="pass_user_repeat">Repetir Clave</label>
+              <div class="input-group input-group-merge">
+                <input
+                  type="password"
+                  class="form-control"
+                  name="pass_user_repeat"
+                  id="pass_user_repeat"
+                  placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                  aria-describedby="password"
+                  required />
+                <span class="input-group-text cursor-pointer">
+                  <i class="bx bx-hide"></i>
+                </span>
+              </div>
+              <div class="text-danger" id="passwordRepeatError" style="display:none;">
+                Las contraseñas no coinciden.
+              </div>
+            </div>
+
+            <button class="btn btn-primary w-100" id="submitButton">
               Crear cuenta
               <i class="bi bi-arrow-right-circle"></i>
             </button>
@@ -145,5 +184,75 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Lógica para leer la tarjeta RFID y rellenar el campo "tarjeta"
+  document.getElementById('readRFID').addEventListener('click', function() {
+    // Aquí iría la lógica de lectura de tarjeta RFID
+    // Por ahora, simularemos la lectura con un valor de ejemplo:
+    const tarjeta = "123456789"; // Este es solo un ejemplo
+    document.getElementById('tarjeta').value = tarjeta;
+  });
+
+  // Validar que las contraseñas coinciden antes de enviar el formulario
+  document.getElementById('submitButton').addEventListener('click', function(e) {
+    const passUser = document.getElementById('pass_user').value;
+    const passUserRepeat = document.getElementById('pass_user_repeat').value;
+    
+    // Validar contraseñas
+    if (passUser !== passUserRepeat) {
+      e.preventDefault(); // Evitar el envío del formulario
+      document.getElementById('passwordRepeatError').style.display = 'block';
+    }
+  });
+
+  // Validación para los campos de nombre y apellido (solo letras)
+  function validateForm() {
+    const name = document.getElementById('name').value;
+    const surname = document.getElementById('surname').value;
+    const cedula = document.getElementById('cedula').value;
+    const passUser = document.getElementById('pass_user').value;
+    let valid = true;
+
+    const nameRegex = /^[a-zA-Z]+$/;
+    const surnameRegex = /^[a-zA-Z]+$/;
+    const cedulaRegex = /^\d{10}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+
+    // Validar nombre
+    if (!nameRegex.test(name)) {
+      document.getElementById('nameError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('nameError').style.display = 'none';
+    }
+
+    // Validar apellido
+    if (!surnameRegex.test(surname)) {
+      document.getElementById('surnameError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('surnameError').style.display = 'none';
+    }
+
+    // Validar cédula
+    if (!cedulaRegex.test(cedula)) {
+      document.getElementById('cedulaError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('cedulaError').style.display = 'none';
+    }
+
+    // Validar contraseña
+    if (!passwordRegex.test(passUser)) {
+      document.getElementById('passwordError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('passwordError').style.display = 'none';
+    }
+
+    return valid;
+  }
+</script>
 
 {% endblock %}
