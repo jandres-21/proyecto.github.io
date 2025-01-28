@@ -19,8 +19,8 @@ UMBRAL_GAS = 500
 def connectionBD():
     try:
         connection = mysql.connector.connect(
-            host="junction.proxy.rlwy.net",
-            port=21594,
+            host="34.57.72.162",
+            port=3306,
             user="root",
             passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",
             database="railway",

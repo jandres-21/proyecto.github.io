@@ -7,8 +7,8 @@ def connectionBD():
     try:
         # Conexión con la base de datos utilizando la URL proporcionada
         connection = mysql.connector.connect(
-            host="junction.proxy.rlwy.net",      # Host de la base de datos
-            port=21594,                           # Puerto
+            host="34.57.72.162",      # Host de la base de datos
+            port=3306,                           # Puerto
             user="root",                          # Usuario
             passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",  # Contraseña
             database="railway",                   # Base de datos
