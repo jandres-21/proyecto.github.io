@@ -18,13 +18,13 @@ def connectionBD():
     try:
         connection = mysql.connector.connect(
             host="34.57.72.162",      # Host de la base de datos
-            port=3306,                           # Puerto
-            user="root",                          # Usuario
+            port=3306,                # Puerto
+            user="root",              # Usuario
             passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",  # Contraseña
-            database="railway",                   # Base de datos
-            charset='utf8mb4',                    # Codificación de caracteres
-            collation='utf8mb4_unicode_ci',       # Colación
-            raise_on_warnings=True                # Levanta errores si los hay
+            database="railway",       # Base de datos
+            charset='utf8mb4',        # Codificación de caracteres
+            collation='utf8mb4_unicode_ci',  # Colación
+            raise_on_warnings=True    # Levanta errores si los hay
         )
         if connection.is_connected():
             print("Conexión exitosa a la BD")
@@ -33,27 +33,29 @@ def connectionBD():
         print(f"No se pudo conectar: {error}")
         return None
 
-# Función para almacenar la temperatura actual en una tabla específica
-def guardar_temperatura_actual(temperatura):
+# Función para almacenar la temperatura en la tabla 'temperatura' si supera el umbral
+def guardar_temperatura(temperatura):
     try:
         fecha_actual = datetime.now()
-        cursor.execute(""" 
-            INSERT INTO temperatura_actual (temperatura, fecha)
-            VALUES (%s, %s)
-        """, (temperatura, fecha_actual))
-        db_connection.commit()
-        print(f"Temperatura actual guardada: {fecha_actual}, {temperatura}°C")
+        if temperatura > UMBRAL_TEMPERATURA:
+            # Insertar en la tabla 'temperatura' si supera el umbral
+            cursor.execute(""" 
+                INSERT INTO temperatura (temperatura, fecha)
+                VALUES (%s, %s)
+            """, (temperatura, fecha_actual))
+            db_connection.commit()
+            print(f"Temperatura guardada en 'temperatura': {fecha_actual}, {temperatura}°C")
+        else:
+            # Si no supera el umbral, insertar en la tabla 'temperatura_actual'
+            cursor.execute("""
+                INSERT INTO temperatura_actual (id, temperatura, fecha)
+                VALUES (1, %s, %s)
+                ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
+            """, (temperatura, fecha_actual, temperatura, fecha_actual))
+            db_connection.commit()
+            print(f"Temperatura guardada en 'temperatura_actual': {fecha_actual}, {temperatura}°C")
     except mysql.connector.Error as error:
-        print(f"Error al guardar temperatura actual: {error}")
-
-# Función para eliminar la última temperatura guardada
-def eliminar_temperatura_actual():
-    try:
-        cursor.execute("DELETE FROM temperatura_actual WHERE id = (SELECT MAX(id) FROM temperatura_actual)")
-        db_connection.commit()
-        print("Temperatura actual eliminada.")
-    except mysql.connector.Error as error:
-        print(f"Error al eliminar temperatura actual: {error}")
+        print(f"Error al guardar temperatura: {error}")
 
 # Funciones para guardar otros datos en la base de datos (gas, RFID, etc.)
 def guardar_datos_gas(rango):
@@ -115,12 +117,8 @@ try:
                     temperatura = float(match.group(1))
                     gas = int(match.group(2))
 
-                    # Solo guardar la temperatura actual cuando la temperatura supera el umbral
-                    if temperatura > UMBRAL_TEMPERATURA:
-                        guardar_temperatura_actual(temperatura)
-                    else:
-                        # Eliminar la temperatura actual si cae debajo del umbral
-                        eliminar_temperatura_actual()
+                    # Guardar la temperatura en la tabla adecuada
+                    guardar_temperatura(temperatura)
 
                     # Solo guardar el primer registro cuando el gas supera el umbral
                     if gas > UMBRAL_GAS:
