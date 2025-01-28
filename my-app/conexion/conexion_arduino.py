@@ -3,6 +3,12 @@ import mysql.connector
 import time
 from datetime import datetime
 import re
+from flask import Flask, render_template
+from flask_socketio import SocketIO
+
+# Configuración de Flask y WebSockets
+app = Flask(__name__)
+socketio = SocketIO(app)
 
 # Configuración de umbrales
 UMBRAL_TEMPERATURA = 25.0
@@ -17,14 +23,14 @@ def connectionBD():
     print("Intentando conectar a la base de datos...")
     try:
         connection = mysql.connector.connect(
-            host="34.57.72.162",      # Host de la base de datos
-            port=3306,                           # Puerto
-            user="root",                          # Usuario
-            passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",  # Contraseña
-            database="railway",                   # Base de datos
-            charset='utf8mb4',                    # Codificación de caracteres
-            collation='utf8mb4_unicode_ci',       # Colación
-            raise_on_warnings=True                # Levanta errores si los hay
+            host="34.57.72.162",
+            port=3306,
+            user="root",
+            passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",
+            database="railway",
+            charset='utf8mb4',
+            collation='utf8mb4_unicode_ci',
+            raise_on_warnings=True
         )
         if connection.is_connected():
             print("Conexión exitosa a la BD")
@@ -60,54 +66,28 @@ def guardar_datos_gas(rango):
     except mysql.connector.Error as error:
         print(f"Error al guardar datos de gas: {error}")
 
-def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
-    try:
-        fecha_actual = datetime.now().strftime('%Y-%m-%d')
-        hora_actual = datetime.now().strftime('%H:%M:%S')
-        cursor.execute(""" 
-            INSERT INTO rfid_tarjetas (uid_tarjeta, estado, fecha, hora, cedula)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (uid, estado_acceso, fecha_actual, hora_actual, cedula_usuario))
-        db_connection.commit()
-        print(f"Acceso guardado: {uid}, Estado: {estado_acceso}")
-    except mysql.connector.Error as error:
-        print(f"Error al guardar datos RFID: {error}")
-
 # Configuración de conexiones
 db_connection = connectionBD()
 cursor = db_connection.cursor() if db_connection else None
 
 # Configuración de los puertos seriales
 try:
-    ser_rfid = serial.Serial('COM4', 9600, timeout=1)  # Puerto para el Arduino RFID
     ser_sensor = serial.Serial('COM3', 9600, timeout=1)  # Puerto para el Arduino de sensores
     time.sleep(2)
     print("Conexión serie establecida.")
 except serial.SerialException as error:
     print(f"Error al conectar con los puertos seriales: {error}")
-    ser_rfid = ser_sensor = None
+    ser_sensor = None
 
-# Loop principal
-try:
-    while ser_rfid and ser_sensor and ser_rfid.is_open and ser_sensor.is_open:
-        # Leer datos de ambos Arduinos
-        if ser_rfid.in_waiting > 0:
-            linea_rfid = ser_rfid.readline().decode('utf-8').strip()
-            print(f"Datos RFID recibidos: {linea_rfid}")
-            if "uid de la tarjeta:" in linea_rfid.lower():
-                uid = linea_rfid.split(":")[1].strip().lower()
-                print(f"UID procesado: {uid}")
-                # Consultar en la base de datos
-                cursor.execute("SELECT * FROM usuarios WHERE LOWER(tarjeta) = %s", (uid,))
-                result = cursor.fetchone()
-                estado_acceso = "permitido" if result else "denegado"
-                cedula_usuario = result[1] if result else None
-                guardar_datos_rfid(uid, estado_acceso, cedula_usuario)
-                if result:
-                    ser_rfid.write(b'1')
-                else:
-                    ser_rfid.write(b'0')
+# Ruta para la página principal
+@app.route('/')
+def index():
+    return render_template('temperatura_real.html')  # Cambia el nombre del archivo si es necesario
 
+# Leer datos de sensores en tiempo real y enviarlos al frontend
+def read_serial_data():
+    global temp_superado, gas_superado
+    while ser_sensor and ser_sensor.is_open:
         if ser_sensor.in_waiting > 0:
             linea_sensor = ser_sensor.readline().decode('utf-8').strip()
             print(f"Datos de sensores recibidos: {linea_sensor}")
@@ -119,36 +99,33 @@ try:
                     temperatura = float(match.group(1))
                     gas = int(match.group(2))
 
+                    # Enviar datos al sistema web en tiempo real
+                    socketio.emit('temperature_update', {'temperature': temperatura, 'gas': gas})
+
                     # Solo guardar el primer registro cuando la temperatura supera el umbral
                     if temperatura > UMBRAL_TEMPERATURA:
-                        if not temp_superado:  # Solo registrar si no se ha registrado antes
+                        if not temp_superado:
                             guardar_datos_temperatura(temperatura)
                             temp_superado = True
                     else:
-                        temp_superado = False  # Reinicia la bandera si vuelve a valores normales
+                        temp_superado = False
 
                     # Solo guardar el primer registro cuando el gas supera el umbral
                     if gas > UMBRAL_GAS:
-                        if not gas_superado:  # Solo registrar si no se ha registrado antes
+                        if not gas_superado:
                             guardar_datos_gas(gas)
                             gas_superado = True
                     else:
-                        gas_superado = False  # Reinicia la bandera si vuelve a valores normales
+                        gas_superado = False
 
                 except ValueError as e:
                     print(f"Error al convertir valores: {e}")
             else:
                 print("Formato de datos no válido.")
         time.sleep(1)
-except KeyboardInterrupt:
-    print("\nFinalizando programa.")
-finally:
-    if cursor:
-        cursor.close()
-    if db_connection:
-        db_connection.close()
-    if ser_rfid and ser_rfid.is_open:
-        ser_rfid.close()
-    if ser_sensor and ser_sensor.is_open:
-        ser_sensor.close()
-    print("Conexiones cerradas.")
+
+# Iniciar el servidor Flask y el proceso de lectura de datos
+if __name__ == '__main__':
+    if ser_sensor:
+        socketio.start_background_task(target=read_serial_data)
+    socketio.run(app, host='0.0.0.0', port=5000)

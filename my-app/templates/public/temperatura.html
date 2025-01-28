@@ -2,20 +2,16 @@
 {% block title %}Temperaturas Registradas{% endblock %}
 {% block body %}
 
-<!-- Mostrar la última temperatura registrada -->
-{% if datos_temperatura %}
-<div class="alert alert-info"><h4>Temperatura Actual {{ datos_temperatura[0]['temperatura'] }}°C</h4></div>
-
-{% else %}
-  <div class="alert alert-warning">
-    <p>No se han registrado temperaturas recientes.</p>
-  </div>
-{% endif %}
+<!-- Mostrar la última temperatura en tiempo real -->
+<div class="alert alert-info">
+  <h4>Temperatura Actual: <span id="temperatura_actual">Cargando...</span>°C</h4>
+</div>
 
 <!-- Tabla de registros de temperaturas -->
-<div class="card">
+<div class="card mt-4">
   <div class="card-body">
     <h5>Registros de Temperatura</h5>
+    {% if datos_temperatura %}
     <table class="table">
       <thead>
         <tr>
@@ -77,18 +73,30 @@
         {% endif %}
       </ul>
     </nav>
-
+    {% else %}
+      <div class="alert alert-warning">
+        <p>No se han registrado temperaturas recientes.</p>
+      </div>
+    {% endif %}
   </div>
 </div>
 
 {% endblock %}
 
-
 {% block customJS %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
 <script>
-  // Función para actualizar los datos automáticamente (simulación)
+  // Conexión con el servidor WebSocket
+  const socket = io();
+
+  // Actualizar temperatura en tiempo real
+  socket.on('temperature_update', function(data) {
+    document.getElementById('temperatura_actual').textContent = data.temperature;
+  });
+
+  // Opcional: Recarga automática cada 60 segundos para mantener actualizada la tabla
   setInterval(function() {
     location.reload();
-  }, 60000); // Actualiza cada minuto
+  }, 60000);
 </script>
 {% endblock %}
