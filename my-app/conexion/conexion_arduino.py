@@ -45,6 +45,13 @@ def guardar_temperatura(temperatura):
             """, (temperatura, fecha_actual))
             db_connection.commit()
             print(f"Temperatura guardada en 'temperatura': {fecha_actual}, {temperatura}°C")
+            cursor.execute("""
+                INSERT INTO temperatura_actual (id, temperatura, fecha)
+                VALUES (1, %s, %s)
+                ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
+            """, (temperatura, fecha_actual, temperatura, fecha_actual))
+            db_connection.commit()
+            print(f"Temperatura guardada en 'temperatura_actual': {fecha_actual}, {temperatura}°C")
         else:
             # Si no supera el umbral, insertar en la tabla 'temperatura_actual'
             cursor.execute("""
@@ -84,6 +91,20 @@ try:
 except serial.SerialException as error:
     print(f"Error al conectar con los puertos seriales: {error}")
     ser_rfid = ser_sensor = None
+
+def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
+    try:
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        hora_actual = datetime.now().strftime('%H:%M:%S')
+        cursor.execute(""" 
+            INSERT INTO rfid_tarjetas (uid_tarjeta, estado, fecha, hora, cedula)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (uid, estado_acceso, fecha_actual, hora_actual, cedula_usuario))
+        db_connection.commit()
+        print(f"Acceso guardado: {uid}, Estado: {estado_acceso}")
+    except mysql.connector.Error as error:
+        print(f"Error al guardar datos RFID: {error}")
+
 
 # Loop principal
 try:
