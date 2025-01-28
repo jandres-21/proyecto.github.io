@@ -6,8 +6,8 @@ import re
 import time
 
 # Configuración de los puertos seriales
-PUERTO_ARDUINO_1 = 'COM3'  # Cambia según tu configuración
-PUERTO_ARDUINO_2 = 'COM4'
+PUERTO_ARDUINO_1 = 'COM4'  # Cambia según tu configuración
+PUERTO_ARDUINO_2 = 'COM3'
 
 BAUD_RATE = 9600
 
