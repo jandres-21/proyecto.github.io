@@ -178,6 +178,30 @@ def obtenerDatosSensoresHumo():
         print(f"Error al obtener los datos de sensores de humo: {error}")
         return []
 
+def obtenerDatosRFID():
+    try:
+        # Establecer conexión a la base de datos
+        connection = connectionBD()
+        
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
+            # Consulta SQL para obtener los registros de tarjetas RFID
+            query = "SELECT * FROM rfid_tarjetas ORDER BY fecha DESC LIMIT 10;"  # Últimos 10 registros
+            cursor.execute(query)
+            
+            # Obtener los resultados
+            datos = cursor.fetchall()
+            cursor.close()  # Cerrar cursor
+            connection.close()  # Cerrar conexión
+            
+            return datos
+    
+    except mysql.connector.Error as error:
+        print(f"Error al obtener los datos de RFID: {error}")
+        return []
+
+
+
 # RUTA PARA MOSTRAR DATOS DE RFID
 @app.route("/rfid", methods=['GET'])
 def rfid():
