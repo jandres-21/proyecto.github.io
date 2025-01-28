@@ -71,19 +71,6 @@ def guardar_datos_gas(rango):
     except mysql.connector.Error as error:
         print(f"Error al guardar datos de gas: {error}")
 
-# Función para guardar datos RFID
-def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
-    try:
-        fecha_actual = datetime.now()
-        cursor.execute(""" 
-            INSERT INTO accesos_rfid (uid, estado_acceso, cedula_usuario, fecha)
-            VALUES (%s, %s, %s, %s)
-        """, (uid, estado_acceso, cedula_usuario, fecha_actual))
-        db_connection.commit()
-        print(f"Datos RFID guardados: UID: {uid}, Estado: {estado_acceso}, Cédula: {cedula_usuario}")
-    except mysql.connector.Error as error:
-        print(f"Error al guardar datos RFID: {error}")
-
 # Configuración de conexiones
 db_connection = connectionBD()
 cursor = db_connection.cursor() if db_connection else None
