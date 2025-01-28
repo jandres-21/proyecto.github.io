@@ -82,3 +82,13 @@
 </div>
 
 {% endblock %}
+
+
+{% block customJS %}
+<script>
+  // Función para actualizar los datos automáticamente (simulación)
+  setInterval(function() {
+    location.reload();
+  }, 60000); // Actualiza cada minuto
+</script>
+{% endblock %}
