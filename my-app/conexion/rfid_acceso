@@ -28,7 +28,7 @@ def main():
     cursor = db_connection.cursor() if db_connection else None
 
     try:
-        ser = serial.Serial('COM3', 9600, timeout=1)  # Ajusta el timeout según sea necesario
+        ser = serial.Serial('COM4', 9600, timeout=1)  # Ajusta el timeout según sea necesario
         time.sleep(2)
         ser.reset_input_buffer()  # Limpia el buffer del puerto serie
         print("Conexión serie establecida.")
