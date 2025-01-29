@@ -17,50 +17,30 @@ import openpyxl  # Para generar el excel
 # biblioteca o modulo send_file para forzar la descarga
 from flask import send_file, session
 
-def accesosReporte():
-    if session['rol'] == 1 :
-        try:
-            with connectionBD() as conexion_MYSQLdb:
-                with conexion_MYSQLdb.cursor(dictionary=True) as cursor:
-                    querySQL = ("""
-                        SELECT a.id_acceso, u.cedula, a.fecha, r.nombre_area, a.clave 
-                        FROM accesos a 
-                        JOIN usuarios u 
-                        JOIN area r
-                        WHERE u.id_area = r.id_area AND u.id_usuario = a.id_usuario
-                        ORDER BY u.cedula, a.fecha DESC
-                                """) 
-                    cursor.execute(querySQL)
-                    accesosBD=cursor.fetchall()
-                return accesosBD
-        except Exception as e:
-            print(
-                f"Errro en la función accesosReporte: {e}")
-            return None
-    else:
-        cedula = session['cedula']
-        try:
-            with connectionBD() as conexion_MYSQLdb:
-                with conexion_MYSQLdb.cursor(dictionary=True) as cursor:
-                    querySQL = ("""
-                        SELECT 
-                            a.id_acceso, 
-                            u.cedula, 
-                            a.fecha,
-                            r.nombre_area, 
-                            a.clave 
-                            FROM accesos a 
-                            JOIN usuarios u JOIN area r 
-                            WHERE u.id_usuario = a.id_usuario AND u.id_area = r.id_area AND u.cedula = %s
-                            ORDER BY u.cedula, a.fecha DESC
-                                """) 
-                    cursor.execute(querySQL,(cedula,))
-                    accesosBD=cursor.fetchall()
-                return accesosBD
-        except Exception as e:
-            print(
-                f"Errro en la función accesosReporte: {e}")
-            return None
+# Lista de Usuarios creados
+def lista_usuariosBD():
+    try:
+        with connectionBD() as conexion_MySQLdb:
+            with conexion_MySQLdb.cursor(dictionary=True) as cursor:
+                querySQL = "SELECT id_usuario, cedula, nombre_usuario, apellido_usuario, id_area, id_rol, tarjeta, estado, genero FROM usuarios"
+                cursor.execute(querySQL,)
+                usuariosBD = cursor.fetchall()
+        return usuariosBD
+    except Exception as e:
+        print(f"Error en lista_usuariosBD : {e}")
+        return []
+
+def lista_areasBD():
+    try:
+        with connectionBD() as conexion_MySQLdb:
+            with conexion_MySQLdb.cursor(dictionary=True) as cursor:
+                querySQL = "SELECT id_area, nombre_area FROM area"
+                cursor.execute(querySQL,)
+                areasBD = cursor.fetchall()
+        return areasBD
+    except Exception as e:
+        print(f"Error en lista_areas : {e}")
+        return []
 
 
 def generarReporteExcel():
@@ -123,30 +103,7 @@ def buscarAreaBD(search):
         return []
 
 
-# Lista de Usuarios creados
-def lista_usuariosBD():
-    try:
-        with connectionBD() as conexion_MySQLdb:
-            with conexion_MySQLdb.cursor(dictionary=True) as cursor:
-                querySQL = "SELECT id_usuario, cedula, nombre_usuario, apellido_usuario, id_area, id_rol, tarjeta, estado, genero FROM usuarios"
-                cursor.execute(querySQL,)
-                usuariosBD = cursor.fetchall()
-        return usuariosBD
-    except Exception as e:
-        print(f"Error en lista_usuariosBD : {e}")
-        return []
 
-def lista_areasBD():
-    try:
-        with connectionBD() as conexion_MySQLdb:
-            with conexion_MySQLdb.cursor(dictionary=True) as cursor:
-                querySQL = "SELECT id_area, nombre_area FROM area"
-                cursor.execute(querySQL,)
-                areasBD = cursor.fetchall()
-        return areasBD
-    except Exception as e:
-        print(f"Error en lista_areas : {e}")
-        return []
 
 # Eliminar usuario
 def eliminarUsuario(id):
