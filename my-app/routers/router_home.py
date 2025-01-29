@@ -312,3 +312,41 @@ def sensores_humo():
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
+
+@app.route('/obtener-ultimo-uid', methods=['POST'])
+def obtenerUltimoUID():
+    if request.method == 'POST':
+        try:
+            conn = mysql.connector.connect(**db_config)
+            cursor = conn.cursor(dictionary=True)
+
+            # Obtener el último UID de la tabla rfid_tarjetas
+            cursor.execute("SELECT UID FROM rfid_tarjetas ORDER BY id DESC LIMIT 1")
+            last_uid = cursor.fetchone()
+
+            if not last_uid:
+                flash('No hay tarjetas registradas en el sistema.', 'warning')
+                return redirect(url_for('pagina_crud'))
+
+            uid = last_uid["UID"]
+
+            # Verificar si el UID ya está registrado en la tabla usuarios
+            cursor.execute("SELECT COUNT(*) as count FROM usuarios WHERE UID = %s", (uid,))
+            result = cursor.fetchone()
+
+            cursor.close()
+            conn.close()
+
+            if result["count"] > 0:
+                flash(f'La tarjeta con UID {uid} ya está asignada a un usuario.', 'danger')
+            else:
+                flash(f'La tarjeta con UID {uid} está disponible para registrar.', 'success')
+                session['ultimo_uid'] = uid  # Guardar en sesión para usarlo en el formulario
+
+            return redirect(url_for('pagina_crud'))  # Ajusta a tu ruta correspondiente
+
+        except Exception as e:
+            flash(f'Error al obtener el UID: {str(e)}', 'danger')
+            return redirect(url_for('pagina_crud'))
+    
+    return redirect(url_for('pagina_crud'))
