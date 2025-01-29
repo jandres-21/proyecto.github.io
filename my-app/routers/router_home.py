@@ -255,49 +255,52 @@ def rfid():
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
 
-# Función para obtener los datos de los sensores de humo
-def obtenerDatosSensoresHumo():
+def obtenerDatosSensoresHumo(page=1, per_page=10):
     try:
-        # Establecer conexión a la base de datos
         connection = connectionBD()
-        
         if connection.is_connected():
-            cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
-            # Consulta SQL para obtener los registros de sensores de humo (últimos 10 registros)
-            query = "SELECT * FROM sensores_humo ORDER BY fecha DESC LIMIT 10;"  
-            cursor.execute(query)
-            
+            cursor = connection.cursor(dictionary=True)
+
+            # Obtener total de registros
+            cursor.execute("SELECT COUNT(*) AS total FROM sensores_humo;")
+            total_registros = cursor.fetchone()['total']
+
+            # Calcular el offset para la paginación
+            offset = (page - 1) * per_page
+
+            # Consulta SQL con paginación
+            query = "SELECT * FROM sensores_humo ORDER BY fecha DESC LIMIT %s OFFSET %s;"
+            cursor.execute(query, (per_page, offset))
+
             # Obtener los resultados
             datos = cursor.fetchall()
-            
+
             # Obtener el último registro
             ultimo_registro = datos[0] if datos else None
-            cursor.close()  # Cerrar cursor
-            connection.close()  # Cerrar conexión
-            
+            cursor.close()
+            connection.close()
+
             # Comprobar si el último registro tiene un valor mayor a 100
             supera_100 = False
-            if ultimo_registro and float(ultimo_registro['rango']) > 100:  # Si el 'rango' del último registro supera 100
+            if ultimo_registro and float(ultimo_registro['rango']) > 100:
                 supera_100 = True
-            
-            return datos, supera_100
+
+            return datos, supera_100, total_registros
     
     except mysql.connector.Error as error:
         print(f"Error al obtener los datos de sensores de humo: {error}")
-        return [], False
-
-
-# Ruta para mostrar los datos de sensores de humo con paginación
+        return [], False, 0
 @app.route("/sensores-humo", methods=['GET'])
 def sensores_humo():
     if 'conectado' in session:
-        # Obtener los datos de sensores de humo desde la base de datos
-        datos_sensores_humo, supera_100 = obtenerDatosSensoresHumo()
-
-        # Paginación
+        # Obtener la página actual desde la URL
         page = request.args.get('page', 1, type=int)
         per_page = 10
-        total_registros = len(datos_sensores_humo)
+
+        # Obtener datos paginados
+        datos_sensores_humo, supera_100, total_registros = obtenerDatosSensoresHumo(page, per_page)
+
+        # Calcular total de páginas correctamente
         total_paginas = (total_registros // per_page) + (1 if total_registros % per_page > 0 else 0)
 
         return render_template('public/sensor_humo.html', 
@@ -309,14 +312,3 @@ def sensores_humo():
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
-
-
-# Ruta para obtener los datos en formato JSON y actualizarlos en tiempo real
-from flask import jsonify
-
-@app.route("/get_sensores_humo_data", methods=['GET'])
-def get_sensores_humo_data():
-    # Obtener los datos de sensores de humo desde la base de datos
-    datos_sensores_humo, supera_100 = obtenerDatosSensoresHumo()
-    return jsonify({'datos_sensores_humo': datos_sensores_humo, 'supera_100': supera_100})
-
