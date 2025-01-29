@@ -1,0 +1,83 @@
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+  <div class="app-brand demo">
+    <a href="{{ url_for('inicio') }}" class="app-brand-link">
+      <span class="app-brand-logo demo">
+        <img src="{{ url_for('static', filename ='assets/img/logo.png') }}" alt="Logo" />
+      </span>
+    </a>
+    <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+      <i class="bx bx-chevron-left bx-sm align-middle"></i>
+    </a>
+  </div>
+
+  <div class="menu-inner-shadow"></div>
+  <ul class="menu-inner py-5">
+
+    <!-- Grupo Perfil -->
+    <li class="menu-item menu-dropdown">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon bi bi-person-fill"></i> <!-- Icono de perfil -->
+        <div data-i18n="Tables">Perfil</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {% if request.path == '/mi-perfil/{{dataLogin.id}}'%} active {% endif %}">
+          <a href="/mi-perfil/{{dataLogin.id}}" class="menu-link">
+            <div data-i18n="Tables">Mi Perfil</div>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="{{ url_for('cerraSesion') }}" class="menu-link">
+            <div data-i18n="Tables">Cerrar Sesión</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+
+    <!-- Grupo Administración -->
+    <li class="menu-item menu-dropdown">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon bi bi-clipboard-data"></i> <!-- Icono de administración -->
+        <div data-i18n="Tables">Administración</div>
+      </a>
+      <ul class="menu-sub">
+          </a>
+        </li>
+        <li class="menu-item {% if request.path == '/lista-de-usuarios' %} active {% endif %}">
+          <a href="/lista-de-usuarios" class="menu-link">
+            <i class="menu-icon bi bi-person-lines-fill"></i> <!-- Icono de usuarios -->
+            <div data-i18n="Tables">Administrar Usuarios</div>
+          </a>
+        </li>
+        <li class="menu-item {% if request.path == '/temperatura' %} active {% endif %}">
+          <a href="/temperatura" class="menu-link">
+            <i class="menu-icon bi bi-thermometer-half"></i> <!-- Icono de temperatura -->
+            <div data-i18n="Tables">Temperatura</div>
+          </a>
+        </li>
+        <li class="menu-item {% if request.path == '/rfid' %} active {% endif %}">
+          <a href="/rfid" class="menu-link">
+            <i class="menu-icon bi bi-shield-lock"></i> <!-- Icono de acceso -->
+            <div data-i18n="Tables">Control de Acceso</div>
+          </a>
+        </li>
+        <li class="menu-item {% if request.path == '/sensor_humo' %} active {% endif %}">
+          <a href="/sensores-humo" class="menu-link">
+            <i class="menu-icon bi bi-cloud-fog2"></i> <!-- Icono de humo -->
+            <div data-i18n="Tables">Sensor de Humo</div>
+          </a>
+        </li>
+
+        <!-- Sección Ventilación comentada -->
+        <!-- 
+        <li class="menu-item {% if request.path == '/ventilacion' %} active {% endif %}">
+          <a href="/ventilacion" class="menu-link">
+            <i class="menu-icon bi bi-wind"></i> <!-- Icono de ventilación -->
+            <div data-i18n="Tables">Ventilación</div>
+          </a>
+        </li>
+    
+      </ul>
+    </li>
+
+  </ul>
+</aside>
