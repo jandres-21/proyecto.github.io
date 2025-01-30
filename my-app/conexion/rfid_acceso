@@ -7,14 +7,14 @@ def connectionBD():
     print("Intentando conectar a la base de datos...")
     try:
         connection = mysql.connector.connect(
-            host="junction.proxy.rlwy.net",
-            port=21594,
-            user="root",
-            passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",
-            database="railway",
-            charset='utf8mb4',
-            collation='utf8mb4_unicode_ci',
-            raise_on_warnings=True
+            host="34.57.72.162",      # Host de la base de datos
+            port=3306,                           # Puerto
+            user="root",                          # Usuario
+            passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",  # Contraseña
+            database="railway",                   # Base de datos
+            charset='utf8mb4',                    # Codificación de caracteres
+            collation='utf8mb4_unicode_ci',       # Colación
+            raise_on_warnings=True                # Levanta errores si los hay
         )
         if connection.is_connected():
             print("Conexión exitosa a la BD")
