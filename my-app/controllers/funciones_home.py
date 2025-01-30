@@ -148,19 +148,25 @@ def lista_areasBD():
         print(f"Error en lista_areas : {e}")
         return []
 
-# Eliminar usuario
 def eliminarUsuario(id):
     try:
         with connectionBD() as conexion_MySQLdb:
-            with conexion_MySQLdb.cursor(dictionary=True) as cursor:
-                querySQL = "DELETE FROM usuarios WHERE id_usuario=%s"
-                cursor.execute(querySQL, (id,))
+            with conexion_MySQLdb.cursor() as cursor:
+                # Actualizar los registros en rfid_tarjetas donde la cedula coincide, poniendo la cedula en NULL
+                cursor.execute("UPDATE rfid_tarjetas SET cedula = NULL WHERE cedula = %s", (id,))
+                
+                # Eliminar el usuario de la tabla usuarios
+                cursor.execute("DELETE FROM usuarios WHERE cedula = %s", (id,))
+                
+                # Confirmar los cambios
                 conexion_MySQLdb.commit()
-                resultado_eliminar = cursor.rowcount
-        return resultado_eliminar
+                
+        return True  # Si todo salió bien
     except Exception as e:
-        print(f"Error en eliminarUsuario : {e}")
-        return []    
+        print(f"Error en eliminarUsuario: {e}")
+        return False  # Si hubo algún error
+
+
 
 def eliminarArea(id):
     try:
