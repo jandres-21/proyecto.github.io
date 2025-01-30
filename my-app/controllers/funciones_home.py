@@ -152,20 +152,35 @@ def eliminarUsuario(id):
     try:
         with connectionBD() as conexion_MySQLdb:
             with conexion_MySQLdb.cursor() as cursor:
-                # Actualizar los registros en rfid_tarjetas donde la cedula coincide, poniendo la cedula en NULL
-                cursor.execute("UPDATE rfid_tarjetas SET cedula = NULL WHERE cedula = %s", (id,))
+                # Verificar si existen registros en rfid_tarjetas para actualizar
+                cursor.execute("SELECT COUNT(*) FROM rfid_tarjetas WHERE cedula = %s", (id,))
+                registros_rfid = cursor.fetchone()[0]
                 
-                # Eliminar el usuario de la tabla usuarios
-                cursor.execute("DELETE FROM usuarios WHERE cedula = %s", (id,))
+                if registros_rfid > 0:
+                    # Actualizar los registros en rfid_tarjetas donde la cedula coincide, poniendo la cedula en NULL
+                    cursor.execute("UPDATE rfid_tarjetas SET cedula = NULL WHERE cedula = %s", (id,))
+                    print(f"{registros_rfid} registros de rfid_tarjetas actualizados.")
+                else:
+                    print("No se encontraron registros en rfid_tarjetas con esa cédula.")
+                
+                # Verificar si el usuario existe para eliminarlo
+                cursor.execute("SELECT COUNT(*) FROM usuarios WHERE cedula = %s", (id,))
+                registros_usuario = cursor.fetchone()[0]
+                
+                if registros_usuario > 0:
+                    # Eliminar el usuario de la tabla usuarios
+                    cursor.execute("DELETE FROM usuarios WHERE cedula = %s", (id,))
+                    print(f"{registros_usuario} usuario(s) eliminado(s).")
+                else:
+                    print("No se encontró un usuario con esa cédula.")
                 
                 # Confirmar los cambios
                 conexion_MySQLdb.commit()
-                
+
         return True  # Si todo salió bien
     except Exception as e:
         print(f"Error en eliminarUsuario: {e}")
         return False  # Si hubo algún error
-
 
 
 def eliminarArea(id):
