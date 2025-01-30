@@ -7,6 +7,7 @@ from mysql.connector import Error
 from controllers.funciones_home import connectionBD
 import time
 import threading
+from controllers.funciones_home import eliminarUsuario
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -164,11 +165,12 @@ def usuarios():
 
 # Ruta para eliminar un usuario
 @app.route('/borrar-usuario/<string:id>', methods=['GET'])
-def eliminarUsuario(id):
+def borrarUsuario(id):
     resp = eliminarUsuario(id)
     if resp:
         flash('El Usuario fue eliminado correctamente', 'success')
         return redirect(url_for('usuarios'))
+
 
 # Ruta para eliminar un área
 @app.route('/borrar-area/<string:id_area>/', methods=['GET'])
