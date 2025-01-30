@@ -164,7 +164,7 @@ def usuarios():
 
 # Ruta para eliminar un usuario
 @app.route('/borrar-usuario/<string:id>', methods=['GET'])
-def borrarUsuario(id):
+def eliminarUsuario(id):
     resp = eliminarUsuario(id)
     if resp:
         flash('El Usuario fue eliminado correctamente', 'success')
