@@ -221,32 +221,64 @@ def updateArea():
             return "Hubo un error al actualizar el área."
     return redirect(url_for('lista_areas'))
 
-# Función para obtener datos de RFID
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import mysql.connector
+
 def obtenerDatosRFID():
     try:
         # Establecer conexión a la base de datos
-        connection = connectionBD()
+        connection = connectionBD()  # Aquí debes tener definida tu función de conexión
         
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
-            # Consulta SQL para obtener los registros de tarjetas RFID
-            query = "SELECT * FROM rfid_tarjetas ORDER BY fecha DESC LIMIT 10;"  # Últimos 10 registros
+            
+            # Consulta SQL para obtener los registros de tarjetas RFID con datos del usuario
+            query = """
+                SELECT 
+    rfid_tarjetas.id, 
+    rfid_tarjetas.uid_tarjeta, 
+    rfid_tarjetas.estado, 
+    rfid_tarjetas.cedula, 
+    rfid_tarjetas.fecha, 
+    rfid_tarjetas.hora, 
+    usuarios.nombre_usuario AS nombre, 
+    usuarios.apellido_usuario AS apellido
+FROM rfid_tarjetas
+LEFT JOIN usuarios ON rfid_tarjetas.cedula = usuarios.cedula
+ORDER BY rfid_tarjetas.fecha DESC
+LIMIT 10;
+
+            """
             cursor.execute(query)
             
             # Obtener los resultados
             datos = cursor.fetchall()
-            cursor.close()  # Cerrar cursor
-            connection.close()  # Cerrar conexión
-            
             return datos
     
     except mysql.connector.Error as error:
         print(f"Error al obtener los datos de RFID: {error}")
         return []
     
+    finally:
+        if connection.is_connected():
+            cursor.close()  # Cerrar cursor
+            connection.close()  # Cerrar conexión
 
-    
-# Ruta para mostrar datos de RFID
+
+
 @app.route("/rfid", methods=['GET'])
 def rfid():
     if 'conectado' in session:
@@ -256,6 +288,8 @@ def rfid():
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
+
+
 
 def obtenerDatosSensoresHumo(page=1, per_page=10):
     try:

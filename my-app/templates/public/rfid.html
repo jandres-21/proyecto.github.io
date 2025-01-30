@@ -14,23 +14,38 @@
       <table class="table table-hover">
         <thead>
           <tr style="background-color: #ddd">
-            <th>ID</th>
-            <th>UID Tarjeta</th>
-            <th>Estado</th>
-            <th>Cedula</th>
+            <th>Cédula</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
             <th>Fecha</th>
             <th>Hora</th>
+            <th>Estado</th>
+            <th>UID Tarjeta</th>
           </tr>
         </thead>
         <tbody>
           {% for registro in datos_rfid %}
           <tr>
-            <td>{{ registro.id }}</td>
-            <td>{{ registro.uid_tarjeta }}</td>
-            <td>{{ registro.estado }}</td>
             <td>{{ registro.cedula }}</td>
+            <td>{{ registro.nombre if registro.nombre else 'Sin Nombre' }}</td>
+            <td>{{ registro.apellido if registro.apellido else 'Sin Apellido' }}</td>
             <td>{{ registro.fecha }}</td>
             <td>{{ registro.hora }}</td>
+            <td class="fw-bold text-center">
+              <span {% if registro.estado == 'Permitido' %} style="color: green;" 
+                    {% elif registro.estado == 'Denegado' %} style="color: red;" 
+                    {% else %} style="color: gray;" {% endif %}>
+                {{ registro.estado }}
+              </span>
+            </td>
+            <td>
+              <div class="input-group">
+                <input type="password" class="form-control uid-tarjeta" value="{{ registro.uid_tarjeta }}" readonly style="max-width: 120px;">
+                <button class="btn btn-outline-secondary toggle-uid" type="button">
+                  <i class="fa-solid fa-eye"></i>
+                </button>
+              </div>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -42,9 +57,28 @@
 
 {% block customJS %}
 <script>
-  // Función para actualizar los datos automáticamente (simulación)
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".toggle-uid").forEach(button => {
+      button.addEventListener("click", function () {
+        let input = this.previousElementSibling;
+        let icon = this.querySelector("i");
+        
+        if (input.type === "password") {
+          input.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      });
+    });
+  });
+
+  // Recarga los datos cada minuto
   setInterval(function() {
     location.reload();
-  }, 60000); // Actualiza cada minuto
+  }, 60000);
 </script>
 {% endblock %}
