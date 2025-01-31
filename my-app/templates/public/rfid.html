@@ -10,10 +10,12 @@
       <hr />
     </h2>
 
-    <!-- Botón para generar Excel -->
+    <!-- Botón para generar Excel (solo visible para rol 1) -->
+    {% if dataLogin.rol == 1 %}
     <div class="text-center mb-4">
       <button id="btnExportarExcel" class="btn btn-success">Generar Excel</button>
     </div>
+    {% endif %}
 
     <div class="table-responsive text-nowrap">
       <table class="table table-hover" id="tablaRFID">
@@ -25,7 +27,9 @@
             <th>Fecha</th>
             <th>Hora</th>
             <th>Estado</th>
+            {% if dataLogin.rol == 1 %} <!-- Solo visible para rol 1 -->
             <th>UID Tarjeta</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -43,6 +47,7 @@
                 {{ registro.estado }}
               </span>
             </td>
+            {% if dataLogin.rol == 1 %}  <!-- Solo visible para rol 1 -->
             <td>
               <div class="input-group">
                 <input type="password" class="form-control uid-tarjeta" value="{{ registro.uid_tarjeta }}" readonly style="max-width: 120px;">
@@ -51,6 +56,7 @@
                 </button>
               </div>
             </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -87,18 +93,22 @@
       location.reload();
     }, 60000);
 
-    // Exportar a Excel
+    // Exportar a Excel (solo para rol 1)
+    {% if dataLogin.rol == 1 %}
     document.getElementById("btnExportarExcel").addEventListener("click", function () {
       let table = document.getElementById('tablaRFID');
       let clonedTable = table.cloneNode(true);
       let rows = clonedTable.querySelectorAll('tbody tr');
       rows.forEach(row => {
         let uidCell = row.cells[6]; 
-        uidCell.innerText = '********';
+        if (uidCell) {
+          uidCell.innerText = '********'; // Ocultar el UID en el Excel
+        }
       });
       var wb = XLSX.utils.table_to_book(clonedTable, {sheet:"Registro RFID"});
       XLSX.writeFile(wb, "registro_rfid.xlsx");
     });
+    {% endif %}
   });
 </script>
 {% endblock %}

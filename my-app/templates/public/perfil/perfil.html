@@ -35,7 +35,11 @@
               value="{{ info_perfil_session[0]['nombre_usuario'] }}"
               class="form-control"
               required 
-              pattern="[A-Za-z\s]+" title="El nombre solo debe contener letras y espacios." />
+              pattern="[A-Za-z\s]+" title="El nombre solo debe contener letras y espacios."
+              {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %} 
+                readonly 
+              {% endif %}
+            />
           </div>
           <div class="mb-3">
             <label for="surname" class="form-label">Apellido</label>
@@ -45,11 +49,15 @@
               name="surname"
               value="{{ info_perfil_session[0]['apellido_usuario'] }}"
               required 
-              pattern="[A-Za-z\s]+" title="El apellido solo debe contener letras y espacios." />
+              pattern="[A-Za-z\s]+" title="El apellido solo debe contener letras y espacios."
+              {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %} 
+                readonly 
+              {% endif %}
+            />
           </div>
           <div>
             <label for="area" class="form-label">Área</label>
-            <select class="form-select" name="selectArea" {% if dataLogin.rol == 2 %} disabled {% endif %} required>
+            <select class="form-select" name="selectArea" {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %} disabled {% endif %} required>
               {% for area in areas %}
               {% if area.id_area == info_perfil_session[0]['id_area'] %}
               <option value="{{ area.id_area }}" selected>{{ area.nombre_area }}</option>
@@ -61,7 +69,7 @@
           </div>
           <div class="mb-3">
             <label for="rol" class="form-label">Rol</label>
-            <select class="form-select" name="selectRol" {% if dataLogin.rol == 2 %} disabled {% endif %} required>
+            <select class="form-select" name="selectRol" {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %} disabled {% endif %} required>
               {% for rol in roles %}
               {% if rol.id_rol == info_perfil_session[0]['id_rol'] %}
               <option value="{{ rol.id_rol }}" selected>{{ rol.nombre_rol }}</option>
@@ -80,12 +88,13 @@
                 name="tarjeta"
                 id="tarjeta"
                 value="{{ info_perfil_session[0]['tarjeta'] }}"
+                {% if dataLogin.rol == 2 %} readonly {% endif %}
                 required />
               <span class="input-group-text cursor-pointer" id="toggleTarjeta">
                 <i class="bx bx-hide"></i>
               </span>
             </div>
-            <button type="button" class="btn btn-secondary mt-2" id="readRFID">Leer Tarjeta RFID</button>
+            <button type="button" class="btn btn-secondary mt-2" id="readRFID" {% if dataLogin.rol == 2 %} style="display: none;" {% endif %}>Leer Tarjeta RFID</button>
           </div>
           <div class="mb-3">
             <label for="estado" class="form-label">Estado Civil</label>
@@ -104,7 +113,7 @@
             </select>
           </div>
 
-          
+          <!-- Clave Actual (obligatoria) -->
           <div class="mb-3 form-password-toggle mt-3">
             <label class="form-label" for="pass_actual">Clave Actual</label>
             <div class="input-group input-group-merge">
@@ -115,14 +124,17 @@
                 id="pass_actual"
                 placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
                 aria-describedby="password" 
-                {% if info_perfil_session[0]['id_rol'] != 2 %} required {% endif %} />
+                required />
               <span class="input-group-text cursor-pointer">
                 <i class="bx bx-hide"></i>
               </span>
             </div>
+            <div id="claveActualError" style="color: red; display: none; font-size: 14px;">
+              Por seguridad, ingrese su clave actual para actualizar sus datos.
+            </div>
           </div>
-          
 
+          <!-- Nueva Clave (opcional) -->
           <div class="mb-3 form-password-toggle">
             <label class="form-label" for="new_pass_user">Nueva Clave</label>
             <div class="input-group input-group-merge">
@@ -132,7 +144,7 @@
                 name="new_pass_user"
                 id="new_pass_user"
                 placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                aria-describedby="password" required />
+                aria-describedby="password" />
               <span class="input-group-text cursor-pointer">
                 <i class="bx bx-hide"></i>
               </span>
@@ -142,6 +154,7 @@
             </div>
           </div>
 
+          <!-- Repetir Nueva Clave (opcional) -->
           <div class="mb-3 form-password-toggle">
             <label class="form-label" for="repetir_pass_user">Repetir Nueva Clave</label>
             <div class="input-group input-group-merge">
@@ -151,7 +164,7 @@
                 name="repetir_pass_user"
                 id="repetir_pass_user"
                 placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                aria-describedby="password" required />
+                aria-describedby="password" />
               <span class="input-group-text cursor-pointer">
                 <i class="bx bx-hide"></i>
               </span>
@@ -176,7 +189,6 @@
 <script>
   // Funcionalidad para leer tarjeta RFID
   document.getElementById("readRFID").addEventListener("click", function() {
-    // Aquí iría la lógica para leer la tarjeta RFID
     alert("Tarjeta RFID leída correctamente!");
   });
 
@@ -199,11 +211,21 @@
   // Validación de formulario y contraseñas seguras
   function validateForm() {
     var form = document.getElementById('perfilForm');
+    var claveActual = document.getElementById('pass_actual').value;
     var password = document.getElementById('new_pass_user').value;
     var passwordRepeat = document.getElementById('repetir_pass_user').value;
+    var claveActualError = document.getElementById('claveActualError');
     var passwordError = document.getElementById('passwordError');
     var passwordMatchError = document.getElementById('passwordMatchError');
     
+    // Verificación de clave actual
+    if (!claveActual) {
+      claveActualError.style.display = 'block';
+      return false;  // No enviar el formulario
+    } else {
+      claveActualError.style.display = 'none';
+    }
+
     // Verificación de contraseñas
     var regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (password && !regex.test(password)) {
@@ -214,7 +236,7 @@
     }
 
     // Verificar que las contraseñas coincidan
-    if (password !== passwordRepeat) {
+    if (password && password !== passwordRepeat) {
       passwordMatchError.style.display = 'block';
       return false;
     } else {
@@ -229,8 +251,6 @@
         return false;
       }
     }
-
-    return true; // Permitir el envío del formulario
   }
 </script>
 

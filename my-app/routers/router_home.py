@@ -232,7 +232,7 @@ def rfid():
 
 
 
-def obtenerDatosSensoresHumo(page=1, per_page=10):
+def obtenerDatosSensoresHumo(page=1, per_page=20):
     try:
         connection = connectionBD()
         if connection.is_connected():
@@ -272,10 +272,10 @@ def sensores_humo():
     if 'conectado' in session:
         # Obtener la página actual desde la URL
         page = request.args.get('page', 1, type=int)
-        per_page = 10
+        per_page = 20
 
         # Obtener datos paginados
-        datos_sensores_humo, supera_100, total_registros = obtenerDatosSensoresHumo(page, per_page)
+        datos_sensores_humo, supera_100, total_registros = obtenerDatosSensoresHumo(page, )
 
         # Calcular total de páginas correctamente
         total_paginas = (total_registros // per_page) + (1 if total_registros % per_page > 0 else 0)

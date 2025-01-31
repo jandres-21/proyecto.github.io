@@ -50,7 +50,13 @@
                                     {% endif %}
                                     {% endfor %}
                                 </td>
-                                <td>{{ usuario.tarjeta}} </td>
+                                <td>
+                                    <!-- Campo de tarjeta con un tamaño más pequeño y contenedor en línea -->
+                                    <div style="display: inline-flex; align-items: center;">
+                                        <input type="password" value="{{ usuario.tarjeta }}" id="tarjeta_{{ usuario.id_usuario }}" class="form-control" style="width: 150px;" readonly />
+                                        <span class="bi bi-eye" id="toggleTarjeta_{{ usuario.id_usuario }}" style="cursor: pointer; margin-left: 5px;"></span>
+                                    </div>
+                                </td>
                                 <td>{{ usuario.estado}} </td>
                                 <td>{{ usuario.genero}} </td>
                                 <td>
@@ -62,12 +68,15 @@
                                         Actualizar
                                     </a>
 
+                                    <!-- Solo muestra el botón de eliminar si el usuario no es "Admin Admin" -->
+                                    {% if usuario.nombre_usuario != 'Admin' or usuario.apellido_usuario != 'Admin' %}
                                     <!-- Formulario para eliminar usuario -->
-                                    <form action="/borrar-usuario/{{ usuario.id_usuario }}" method="POST" style="display:inline;">
-                                        <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar a {{ usuario.nombre_usuario }}">
+                                    <form action="/borrar-usuario/{{ usuario.id_usuario }}" method="POST" style="display:inline;" id="form_eliminar_{{ usuario.id_usuario }}">
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar a {{ usuario.nombre_usuario }}" onclick="confirmarEliminar({{ usuario.id_usuario }})">
                                             <i class="bi bi-trash3"></i> Eliminar
                                         </button>
                                     </form>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -91,13 +100,33 @@
 <!--Script Custom-->
 {% block customJS %}
 <script>
-    // Función para confirmar antes de eliminar usuario
-    function eliminarUsuario(id) {
-        if (confirm("¿Estás seguro que deseas eliminar el Usuario?")) {
-            let url = `/borrar-usuario/${id}`;
-            if (url) {
-                window.location.href = url;
-            }
+    // Función para mostrar/ocultar la tarjeta
+    {% for usuario in resp_usuariosBD %}
+    document.getElementById("toggleTarjeta_{{ usuario.id_usuario }}").addEventListener("click", function() {
+        var tarjetaInput = document.getElementById("tarjeta_{{ usuario.id_usuario }}");
+        var icon = this;
+
+        if (tarjetaInput.type === "password") {
+            tarjetaInput.type = "text";
+            icon.classList.remove("bi-eye");
+            icon.classList.add("bi-eye-slash");
+        } else {
+            tarjetaInput.type = "password";
+            icon.classList.remove("bi-eye-slash");
+            icon.classList.add("bi-eye");
+        }
+    });
+    {% endfor %}
+
+    // Función de confirmación antes de eliminar
+    function confirmarEliminar(id) {
+        var respuesta = confirm("¿Estás seguro que deseas eliminar este usuario?");
+        if (respuesta) {
+            // Si el usuario confirma, se envía el formulario de eliminación
+            document.getElementById("form_eliminar_" + id).submit();
+        } else {
+            // Si el usuario cancela, no hace nada
+            return false;
         }
     }
 </script>

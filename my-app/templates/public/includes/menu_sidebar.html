@@ -40,14 +40,14 @@
         <div data-i18n="Tables">Administración</div>
       </a>
       <ul class="menu-sub">
-          </a>
-        </li>
+        {% if dataLogin.rol == 1 %}  <!-- Solo para rol 1 -->
         <li class="menu-item {% if request.path == '/lista-de-usuarios' %} active {% endif %}">
           <a href="/lista-de-usuarios" class="menu-link">
             <i class="menu-icon bi bi-person-lines-fill"></i> <!-- Icono de usuarios -->
             <div data-i18n="Tables">Administrar Usuarios</div>
           </a>
         </li>
+        {% endif %}  <!-- Fin de la verificación del rol -->
         <li class="menu-item {% if request.path == '/temperatura' %} active {% endif %}">
           <a href="/temperatura" class="menu-link">
             <i class="menu-icon bi bi-thermometer-half"></i> <!-- Icono de temperatura -->
@@ -66,6 +66,8 @@
             <div data-i18n="Tables">Sensor de Humo</div>
           </a>
         </li>
-
+      </ul>
+    </li>
+    
   </ul>
 </aside>
