@@ -127,9 +127,28 @@ button,
 html input[type="button"],
 input[type="reset"],
 input[type="submit"] {
-  -webkit-appearance: button;
-  cursor: pointer;
+  -webkit-appearance: none; /* Eliminar el estilo nativo del navegador */
+  appearance: none; /* Estándar */
+  cursor: pointer; /* Apunta el cursor como si fuera un botón */
+  padding: 10px 20px; /* Espaciado dentro del botón */
+  border: 1px solid #ccc; /* Bordes de color gris */
+  background-color: #007bff; /* Fondo azul */
+  color: white; /* Texto blanco */
+  border-radius: 5px; /* Bordes redondeados */
+  font-size: 16px; /* Tamaño de la fuente */
+  text-align: center; /* Centrar el texto */
+  outline: none; /* Eliminar el borde de enfoque */
 }
+
+/* Agregar un efecto de hover */
+button:hover,
+html input[type="button"]:hover,
+input[type="reset"]:hover,
+input[type="submit"]:hover {
+  background-color: #0056b3; /* Cambiar color cuando se pasa el cursor */
+}
+
+
 button[disabled],
 html input[disabled] {
   cursor: default;
@@ -154,11 +173,18 @@ input[type="number"]::-webkit-outer-spin-button {
   height: auto;
 }
 input[type="search"] {
-  -webkit-box-sizing: content-box;
-  -moz-box-sizing: content-box;
-  box-sizing: content-box;
-  -webkit-appearance: textfield;
+  box-sizing: content-box; /* Estándar */
+  -webkit-box-sizing: content-box; /* Compatibilidad con WebKit */
+  -moz-box-sizing: content-box; /* Compatibilidad con Firefox */
+  appearance: textfield; /* Estándar */
+  -webkit-appearance: textfield; /* Compatibilidad con WebKit */
+  -moz-appearance: textfield; /* Compatibilidad con Firefox */
+  padding: 5px; /* Espaciado interno */
+  border: 1px solid #ccc; /* Borde visible */
+  border-radius: 4px; /* Bordes redondeados */
+  outline: none; /* Evita resaltado al hacer clic */
 }
+
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
   -webkit-appearance: none;
@@ -2694,8 +2720,15 @@ textarea.form-control {
   height: auto;
 }
 input[type="search"] {
-  -webkit-appearance: none;
+  appearance: none; /* Estándar */
+  -webkit-appearance: none; /* Compatibilidad con WebKit (Chrome, Safari) */
+  -moz-appearance: none; /* Compatibilidad con Firefox */
+  outline: none; /* Evita estilos por defecto en algunos navegadores */
+  border: 1px solid #ccc; /* Añadir un borde visible */
+  padding: 5px; /* Espaciado interno */
+  border-radius: 4px; /* Bordes redondeados */
 }
+
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
   input[type="date"].form-control,
   input[type="time"].form-control,
@@ -6202,12 +6235,15 @@ button.list-group-item-danger.active:hover {
   opacity: 0.5;
 }
 button.close {
-  -webkit-appearance: none;
+  appearance: none; /* Versión estándar */
+  -webkit-appearance: none; /* Para navegadores WebKit (Chrome, Safari) */
+  -moz-appearance: none; /* Para Firefox */
   padding: 0;
   cursor: pointer;
-  background: 0 0;
-  border: 0;
+  background: transparent; /* Mejor legibilidad que '0 0' */
+  border: none;
 }
+
 .modal-open {
   overflow: hidden;
 }
@@ -6783,11 +6819,11 @@ button.close {
   margin: 1px;
   text-indent: -999px;
   cursor: pointer;
-  background-color: #000\9;
-  background-color: rgba(0, 0, 0, 0);
+  background-color: rgba(0, 0, 0, 0); /* Corrección */
   border: 1px solid #fff;
   border-radius: 10px;
 }
+
 .carousel-indicators .active {
   width: 12px;
   height: 12px;
@@ -7132,4 +7168,59 @@ button.close {
     display: none !important;
   }
 }
+
+/* Fondo del loader */
+#loader-out {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Fondo oscuro transparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Asegura que el loader esté encima de otros contenidos */
+}
+
+/* Contenedor del loader */
+#loader-container {
+  background: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* El círculo de carga */
+.loader {
+  border: 8px solid #f3f3f3; /* Color de fondo del círculo */
+  border-top: 8px solid #3498db; /* Color de la parte giratoria */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1.5s linear infinite;
+  margin-bottom: 10px; /* Espacio entre el círculo y el texto */
+}
+
+/* Animación de giro */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Estilo del texto de carga */
+#loading-text {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
 /*# sourceMappingURL=bootstrap.min.css.map */

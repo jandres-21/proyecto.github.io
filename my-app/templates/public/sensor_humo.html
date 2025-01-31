@@ -1,6 +1,6 @@
 {% extends 'public/base_cpanel.html' %}
 
-{% block title %}Monitor de Sensores de Humo | Sensor Data{% endblock %}
+{% block title %}..INNOVATECH..{% endblock %}
 
 {% block body %}
 <div class="card content_consignaciones" style="border-radius: 0px !important">
@@ -19,19 +19,21 @@
       <table class="table table-hover" id="tablaSensoresHumo">
         <thead>
           <tr style="background-color: #ddd">
-            <th>Registro</th>
             <th>Fecha</th>
+            <th>Hora</th>
+            <th>Registro</th>
           </tr>
         </thead>
         <tbody>
           {% for registro in datos_sensores_humo %}
           <tr>
+            <td>{{ registro.fecha.strftime('%Y-%m-%d') }}</td> <!-- Muestra solo la fecha -->
+            <td>{{ registro.fecha.strftime('%H:%M:%S') }}</td> <!-- Muestra solo la hora -->
             <td>{{ registro.rango }}</td>
-            <td>{{ registro.fecha }}</td>
           </tr>
           {% else %}
           <tr>
-            <td colspan="2" class="text-center">No se han registrado datos aún.</td>
+            <td colspan="3" class="text-center">No se han registrado datos aún.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -74,23 +76,28 @@
 <script>
   // Función para actualizar los datos automáticamente
   setInterval(function() {
-    $.getJSON('/get_sensores_humo_data', function(data) {
+    $.getJSON('/get_sensores_humo_data', function(response) {
       // Actualiza la tabla con nuevos datos
       var tabla = $("#tablaSensoresHumo tbody");
       tabla.empty(); // Limpiar tabla
 
-      if (data.datos_sensores_humo.length > 0) {
-        data.datos_sensores_humo.forEach(function(registro) {
-          var row = "<tr><td>" + registro.rango + "</td><td>" + registro.fecha + "</td></tr>";
+      // Verifica que los datos estén disponibles antes de procesarlos
+      if (response && response.datos_sensores_humo && response.datos_sensores_humo.length > 0) {
+        response.datos_sensores_humo.forEach(function(registro) {
+          var fecha = new Date(registro.fecha);
+          var formattedFecha = fecha.toISOString().split('T')[0]; // Extrae solo la fecha
+          var formattedHora = fecha.toTimeString().split(' ')[0]; // Extrae solo la hora
+
+          var row = "<tr><td>" + formattedFecha + "</td><td>" + formattedHora + "</td><td>" + registro.rango + "</td></tr>";
           tabla.append(row);
         });
       } else {
-        tabla.append("<tr><td colspan='2' class='text-center'>No se han registrado datos aún.</td></tr>");
+        tabla.append("<tr><td colspan='3' class='text-center'>No se han registrado datos aún.</td></tr>");
       }
 
       // Cambiar color del círculo dependiendo de la condición
       var statusCircle = $("#status-circle");
-      if (data.supera_100) {
+      if (response.supera_100) {
         statusCircle.removeClass("green").addClass("red");
       } else {
         statusCircle.removeClass("red").addClass("green");
