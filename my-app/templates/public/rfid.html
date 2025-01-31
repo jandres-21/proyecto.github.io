@@ -10,8 +10,13 @@
       <hr />
     </h2>
 
+    <!-- Botón para generar Excel -->
+    <div class="text-center mb-4">
+      <button id="btnExportarExcel" class="btn btn-success">Generar Excel</button>
+    </div>
+
     <div class="table-responsive text-nowrap">
-      <table class="table table-hover">
+      <table class="table table-hover" id="tablaRFID">
         <thead>
           <tr style="background-color: #ddd">
             <th>Cédula</th>
@@ -56,8 +61,10 @@
 {% endblock %}
 
 {% block customJS %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    // Funcionalidad de mostrar/ocultar el UID
     document.querySelectorAll(".toggle-uid").forEach(button => {
       button.addEventListener("click", function () {
         let input = this.previousElementSibling;
@@ -74,11 +81,24 @@
         }
       });
     });
-  });
 
-  // Recarga los datos cada minuto
-  setInterval(function() {
-    location.reload();
-  }, 60000);
+    // Recarga los datos cada minuto
+    setInterval(function() {
+      location.reload();
+    }, 60000);
+
+    // Exportar a Excel
+    document.getElementById("btnExportarExcel").addEventListener("click", function () {
+      let table = document.getElementById('tablaRFID');
+      let clonedTable = table.cloneNode(true);
+      let rows = clonedTable.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        let uidCell = row.cells[6]; 
+        uidCell.innerText = '********';
+      });
+      var wb = XLSX.utils.table_to_book(clonedTable, {sheet:"Registro RFID"});
+      XLSX.writeFile(wb, "registro_rfid.xlsx");
+    });
+  });
 </script>
 {% endblock %}

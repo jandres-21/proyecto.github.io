@@ -8,6 +8,7 @@ from controllers.funciones_home import connectionBD
 import time
 import threading
 from controllers.funciones_home import eliminarUsuario
+from flask import request, jsonify
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -164,78 +165,18 @@ def usuarios():
         return redirect(url_for('inicioCpanel'))
 
 # Ruta para eliminar un usuario
-@app.route('/borrar-usuario/<string:id>', methods=['GET'])
+@app.route('/borrar-usuario/<string:id>', methods=['GET', 'POST'])
 def borrarUsuario(id):
-    resp = eliminarUsuario(id)
-    if resp:
-        flash('El Usuario fue eliminado correctamente', 'success')
+    if request.method == 'POST':
+        # Llamar a la función para eliminar el usuario
+        resp = eliminarUsuario(id)
+        
+        if resp:
+            flash('El Usuario fue eliminado correctamente', 'success')
+        else:
+            flash('Error al eliminar el usuario', 'error')
+        
         return redirect(url_for('usuarios'))
-
-
-# Ruta para eliminar un área
-@app.route('/borrar-area/<string:id_area>/', methods=['GET'])
-def borrarArea(id_area):
-    resp = eliminarArea(id_area)
-    if resp:
-        flash('El Empleado fue eliminado correctamente', 'success')
-        return redirect(url_for('lista_areas'))
-    else:
-        flash('Hay usuarios que pertenecen a esta área', 'error')
-        return redirect(url_for('lista_areas'))
-
-# Ruta para reporte de accesos
-@app.route("/reporte-accesos", methods=['GET'])
-def reporteAccesos():
-    if 'conectado' in session:
-        userData = dataLoginSesion()
-        return render_template('public/perfil/reportes.html', reportes=dataReportes(), lastAccess=lastAccessBD(userData.get('cedula')), dataLogin=dataLoginSesion())
-
-# Ruta para crear un área
-@app.route('/crear-area', methods=['GET','POST'])
-def crearArea():
-    if request.method == 'POST':
-        area_name = request.form['nombre_area']  # Asumiendo que 'nombre_area' es el nombre del campo en el formulario
-        resultado_insert = guardarArea(area_name)
-        if resultado_insert:
-            # Éxito al guardar el área
-            flash('El Area fue creada correctamente', 'success')
-            return redirect(url_for('lista_areas'))
-        else:
-            # Manejar error al guardar el área
-            return "Hubo un error al guardar el área."
-    return render_template('public/usuarios/lista_areas')
-
-# Ruta para actualizar un área
-@app.route('/actualizar-area', methods=['POST'])
-def updateArea():
-    if request.method == 'POST':
-        nombre_area = request.form['nombre_area']  # Asumiendo que 'nuevo_nombre' es el nombre del campo en el formulario
-        id_area = request.form['id_area']
-        resultado_update = actualizarArea(id_area, nombre_area)
-        if resultado_update:
-            # Éxito al actualizar el área
-            flash('El área fue actualizada correctamente', 'success')
-            return redirect(url_for('lista_areas'))
-        else:
-            # Manejar error al actualizar el área
-            return "Hubo un error al actualizar el área."
-    return redirect(url_for('lista_areas'))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import mysql.connector
 
 def obtenerDatosRFID():
     try:

@@ -61,18 +61,13 @@
                                         <i class="bi bi-arrow-clockwise"></i>
                                         Actualizar
                                     </a>
-                                    <a
-                                        style="color: white;"
-                                        onclick="eliminarUsuario('{{ usuario.id_usuario }}');"
-                                        class="btn btn-danger btn-sm"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-offset="0,4"
-                                        data-bs-placement="top"
-                                        data-bs-html="true"
-                                        title="<span>Eliminar a {{ usuario.nombre_usuario }}</span>">
-                                        <i class="bi bi-trash3"></i>
-                                        Eliminar
-                                    </a>
+
+                                    <!-- Formulario para eliminar usuario -->
+                                    <form action="/borrar-usuario/{{ usuario.id_usuario }}" method="POST" style="display:inline;">
+                                        <button type="submit" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar a {{ usuario.nombre_usuario }}">
+                                            <i class="bi bi-trash3"></i> Eliminar
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -96,8 +91,9 @@
 <!--Script Custom-->
 {% block customJS %}
 <script>
+    // Función para confirmar antes de eliminar usuario
     function eliminarUsuario(id) {
-        if (confirm("¿Estas seguro que deseas eliminar el Usuario?")) {
+        if (confirm("¿Estás seguro que deseas eliminar el Usuario?")) {
             let url = `/borrar-usuario/${id}`;
             if (url) {
                 window.location.href = url;
