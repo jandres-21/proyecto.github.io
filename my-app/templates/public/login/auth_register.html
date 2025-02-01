@@ -140,7 +140,7 @@
                 </span>
               </div>
               <div class="text-danger" id="passwordError" style="display:none;">
-                La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un carácter especial.
+                La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un carácter especial valido (!@#$%^&*+\-).
               </div>
             </div>
             
@@ -217,8 +217,7 @@
     const nameRegex = /^[a-zA-Z]+$/;
     const surnameRegex = /^[a-zA-Z]+$/;
     const cedulaRegex = /^\d{10}$/;
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
-
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*+\-.,:;|°]).{8,}$/;
     // Validar nombre
     if (!nameRegex.test(name)) {
       document.getElementById('nameError').style.display = 'block';
