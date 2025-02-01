@@ -54,6 +54,7 @@ def validarDataRegisterLogin(cedula, name, surname, pass_user):
                 else:
                     # La cuenta no existe y los datos del formulario son válidos, puedo realizar el Insert
                     return True
+                
     except Exception as e:
         print(f"Error en validarDataRegisterLogin : {e}")
         return []

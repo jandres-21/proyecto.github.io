@@ -170,7 +170,12 @@ try:
                     ser_rfid.write(b'1')
                 else:
                     ser_rfid.write(b'0')
-
+                if estado_acceso=="denegado":
+                     cursor.execute(""" 
+            INSERT INTO Tarjeta (codigo)
+            VALUES (%s)
+        """, (uid))
+        db_connection.commit()
         if ser_sensor.in_waiting > 0:
             linea_sensor = ser_sensor.readline().decode('utf-8').strip()
             print(f"Datos de sensores recibidos: {linea_sensor}")
