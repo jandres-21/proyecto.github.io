@@ -46,7 +46,7 @@ def validarDataRegisterLogin(cedula, name, surname, pass_user):
                 userBD = cursor.fetchone()  # Obtener la primera fila de resultados
 
                 if userBD is not None:
-                    flash('el registro no fue procesado ya existe la cuenta', 'error')
+                    flash('Ya existe una cuenta con este numero de cedula', 'error')
                     return False
                 elif not cedula or not name or not pass_user:
                     flash('por favor llene los campos del formulario.', 'error')

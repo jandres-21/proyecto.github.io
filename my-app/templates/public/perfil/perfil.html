@@ -227,7 +227,7 @@
     }
 
     // Verificación de contraseñas
-    var regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    var regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*+\-.,:;|°])[A-Za-z\d@$!@#$%^&*+\-.,:;|°]{8,}$/;
     if (password && !regex.test(password)) {
       passwordError.style.display = 'block';
       return false;  // No enviar el formulario
