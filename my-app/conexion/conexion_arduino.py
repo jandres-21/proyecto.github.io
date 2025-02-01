@@ -84,8 +84,8 @@ cursor = db_connection.cursor() if db_connection else None
 
 # Configuración de los puertos seriales
 try:
-    ser_rfid = serial.Serial('COM4', 9600, timeout=1)  # Puerto para el Arduino RFID
-    ser_sensor = serial.Serial('COM3', 9600, timeout=1)  # Puerto para el Arduino de sensores
+    ser_rfid = serial.Serial('COM3', 9600, timeout=1)  # Puerto para el Arduino RFID
+    ser_sensor = serial.Serial('COM4', 9600, timeout=1)  # Puerto para el Arduino de sensores
     time.sleep(2)
     print("Conexión serie establecida.")
 except serial.SerialException as error:
