@@ -33,29 +33,29 @@ def connectionBD():
         print(f"No se pudo conectar: {error}")
         return None
 
-# Función para almacenar la temperatura en la tabla 'temperatura' si supera el umbral
-from datetime import datetime
-import mysql.connector
-
-# Variable global para almacenar el último múltiplo de 4 grados guardado
-ultimo_temperatura_guardada = 20  # Inicializamos con 25°C, el primer umbral
+# Inicializar variable global
+ultimo_temperatura_guardada = None  
 
 def guardar_temperatura(temperatura):
-    global ultimo_temperatura_guardada  # Usamos la variable global
+    global ultimo_temperatura_guardada
 
     try:
         # Obtener la fecha y hora actuales
         fecha_actual = datetime.now()
 
-        # Verificar si la temperatura supera el umbral y si es un múltiplo de 4 superior al último registrado
-        if temperatura > 24 and (temperatura // 4) * 4 > ultimo_temperatura_guardada:
-            # Insertar en la tabla 'temperatura' si supera el umbral
+        # Si la temperatura es menor o igual a 25, no almacenamos nada
+        if temperatura <= 25:
+            return
+
+        # Si no hay un valor previo o la temperatura ha aumentado en al menos 2°C
+        if ultimo_temperatura_guardada is None or temperatura >= ultimo_temperatura_guardada + 2:
+            # Insertar en la tabla 'temperatura'
             cursor.execute(""" 
                 INSERT INTO temperatura (temperatura, fecha)
                 VALUES (%s, %s)
             """, (temperatura, fecha_actual))
             db_connection.commit()
-            print(f"Temperatura guardada en 'temperatura': {fecha_actual}, {temperatura}°C")
+            print(f"Temperatura registrada en 'temperatura': {temperatura}°C - {fecha_actual}")
 
             # Actualizar la tabla 'temperatura_actual' con el último valor
             cursor.execute("""
@@ -64,20 +64,20 @@ def guardar_temperatura(temperatura):
                 ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
             """, (temperatura, fecha_actual, temperatura, fecha_actual))
             db_connection.commit()
-            print(f"Temperatura guardada en 'temperatura_actual': {fecha_actual}, {temperatura}°C")
+            print(f"Actualizado 'temperatura_actual': {temperatura}°C - {fecha_actual}")
 
-            # Actualizar el último valor guardado con el múltiplo de 4 más cercano
-            ultimo_temperatura_guardada = (temperatura // 4) * 4
+            # Actualizar el último valor guardado
+            ultimo_temperatura_guardada = temperatura
 
         else:
-            # Si no supera el umbral o ya se ha registrado una temperatura similar, solo actualizar 'temperatura_actual'
+            # Solo actualizar 'temperatura_actual' sin guardar en el historial
             cursor.execute("""
                 INSERT INTO temperatura_actual (id, temperatura, fecha)
                 VALUES (1, %s, %s)
                 ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
             """, (temperatura, fecha_actual, temperatura, fecha_actual))
             db_connection.commit()
-            print(f"Temperatura guardada en 'temperatura_actual': {fecha_actual}, {temperatura}°C")
+            print(f"Solo actualizado 'temperatura_actual': {temperatura}°C - {fecha_actual}")
 
     except mysql.connector.Error as error:
         print(f"Error al guardar temperatura: {error}")

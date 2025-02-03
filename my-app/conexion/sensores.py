@@ -6,7 +6,7 @@ import re
 
 # Configuración de umbrales
 UMBRAL_TEMPERATURA = 25.0
-UMBRAL_GAS = 500
+umbral_gas = 500
 
 # Banderas para evitar múltiples registros
 temp_superado = False
@@ -96,7 +96,7 @@ try:
                         temp_superado = False  # Reinicia la bandera si vuelve a valores normales
 
                     # Validar gas y registrar solo la primera vez que supere el umbral
-                    if gas > UMBRAL_GAS:
+                    if gas > umbral_gas:
                         if not gas_superado:  # Solo registrar si no se ha registrado antes
                             guardar_datos_gas(gas)
                             gas_superado = True
