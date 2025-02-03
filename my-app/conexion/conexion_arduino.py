@@ -45,8 +45,13 @@ def guardar_temperatura(temperatura):
 
         # Si la temperatura es menor o igual a 25, no almacenamos nada
         if temperatura <= 25:
-            return
-
+             cursor.execute("""
+                INSERT INTO temperatura_actual (id, temperatura, fecha)
+                VALUES (1, %s, %s)
+                ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
+            """, (temperatura, fecha_actual, temperatura, fecha_actual))
+        db_connection.commit()
+        print(f"Actualizado 'temperatura_actual': {temperatura}°C - {fecha_actual}")
         # Si no hay un valor previo o la temperatura ha aumentado en al menos 2°C
         if ultimo_temperatura_guardada is None or temperatura >= ultimo_temperatura_guardada + 2:
             # Insertar en la tabla 'temperatura'
@@ -68,7 +73,6 @@ def guardar_temperatura(temperatura):
 
             # Actualizar el último valor guardado
             ultimo_temperatura_guardada = temperatura
-
         else:
             # Solo actualizar 'temperatura_actual' sin guardar en el historial
             cursor.execute("""
@@ -78,7 +82,6 @@ def guardar_temperatura(temperatura):
             """, (temperatura, fecha_actual, temperatura, fecha_actual))
             db_connection.commit()
             print(f"Solo actualizado 'temperatura_actual': {temperatura}°C - {fecha_actual}")
-
     except mysql.connector.Error as error:
         print(f"Error al guardar temperatura: {error}")
 
