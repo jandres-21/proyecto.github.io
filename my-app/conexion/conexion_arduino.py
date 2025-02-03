@@ -175,7 +175,7 @@ try:
                      cursor.execute(""" 
             INSERT INTO Tarjeta (codigo)
             VALUES (%s)
-        """, (uid))
+        """, (uid,))
         db_connection.commit()
         if ser_sensor.in_waiting > 0:
             linea_sensor = ser_sensor.readline().decode('utf-8').strip()
