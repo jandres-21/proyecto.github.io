@@ -5,8 +5,8 @@ from datetime import datetime
 import re
 
 # Configuración de umbrales
-UMBRAL_TEMPERATURA = 25.0
-UMBRAL_GAS = 500
+umbral_temperatura = 25.0
+umbral_gas = 500
 
 # Banderas para evitar múltiples registros
 temp_superado = False
@@ -38,7 +38,7 @@ from datetime import datetime
 import mysql.connector
 
 # Variable global para almacenar el último múltiplo de 4 grados guardado
-ultimo_temperatura_guardada = 25  # Inicializamos con 25°C, el primer umbral
+ultimo_temperatura_guardada = 20  # Inicializamos con 25°C, el primer umbral
 
 def guardar_temperatura(temperatura):
     global ultimo_temperatura_guardada  # Usamos la variable global
@@ -48,7 +48,7 @@ def guardar_temperatura(temperatura):
         fecha_actual = datetime.now()
 
         # Verificar si la temperatura supera el umbral y si es un múltiplo de 4 superior al último registrado
-        if temperatura > 25 and (temperatura // 4) * 4 > ultimo_temperatura_guardada:
+        if temperatura > 24 and (temperatura // 4) * 4 > ultimo_temperatura_guardada:
             # Insertar en la tabla 'temperatura' si supera el umbral
             cursor.execute(""" 
                 INSERT INTO temperatura (temperatura, fecha)
@@ -83,9 +83,7 @@ def guardar_temperatura(temperatura):
         print(f"Error al guardar temperatura: {error}")
 
 
-# Funciones para guardar otros datos en la base de datos (gas, RFID, etc.)
-from datetime import datetime
-import mysql.connector
+
 
 # Variable global para almacenar el último múltiplo de 500 guardado
 ultimo_rango_guardado = 0

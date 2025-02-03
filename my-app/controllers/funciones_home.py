@@ -28,7 +28,7 @@ def accesosReporte():
                         JOIN usuarios u 
                         JOIN area r
                         WHERE u.id_area = r.id_area AND u.id_usuario = a.id_usuario
-                        ORDER BY u.cedula, a.fecha DESC
+                        ORDER BY a.fecha DESC
                                 """) 
                     cursor.execute(querySQL)
                     accesosBD=cursor.fetchall()
@@ -52,7 +52,7 @@ def accesosReporte():
                             FROM accesos a 
                             JOIN usuarios u JOIN area r 
                             WHERE u.id_usuario = a.id_usuario AND u.id_area = r.id_area AND u.cedula = %s
-                            ORDER BY u.cedula, a.fecha DESC
+                            ORDER BY a.fecha DESC
                                 """) 
                     cursor.execute(querySQL,(cedula,))
                     accesosBD=cursor.fetchall()
@@ -190,7 +190,7 @@ def dataReportes():
                 JOIN usuarios u 
                 JOIN area r
                 WHERE u.id_area = r.id_area AND u.id_usuario = a.id_usuario
-                ORDER BY u.cedula, a.fecha DESC
+                ORDER BY a.fecha DESC
                 """
                 cursor.execute(querySQL)
                 reportes = cursor.fetchall()
