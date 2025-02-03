@@ -290,3 +290,32 @@ def sensores_humo():
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
     
+
+
+def ObtenerTargeta():
+    try:
+        connection = connectionBD()
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute("SELECT codigo FROM Targeta")  # Consulta SQL
+            usuarios = cursor.fetchall()
+            if usuarios:
+                ultimo_codigo = usuarios[-1]['codigo']  # Obtenemos el último código
+                cursor.close()
+                connection.close()
+                return ultimo_codigo
+            else:
+                cursor.close()
+                connection.close()
+                return None
+    except mysql.connector.Error as error:
+        print(f"Error al obtener código de tarjeta: {error}")
+        return None
+
+@app.route('/obtener_targeta', methods=['GET'])
+def obtener_targeta():
+    ultimo_codigo = ObtenerTargeta()
+    if ultimo_codigo:
+        return jsonify({'codigo': ultimo_codigo})
+    else:
+        return jsonify({'error': 'No se encontró ningún código de tarjeta.'}), 404

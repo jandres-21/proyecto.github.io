@@ -34,10 +34,21 @@ def connectionBD():
         return None
 
 # Función para almacenar la temperatura en la tabla 'temperatura' si supera el umbral
+from datetime import datetime
+import mysql.connector
+
+# Variable global para almacenar el último múltiplo de 4 grados guardado
+ultimo_temperatura_guardada = 25  # Inicializamos con 25°C, el primer umbral
+
 def guardar_temperatura(temperatura):
+    global ultimo_temperatura_guardada  # Usamos la variable global
+
     try:
+        # Obtener la fecha y hora actuales
         fecha_actual = datetime.now()
-        if temperatura > UMBRAL_TEMPERATURA:
+
+        # Verificar si la temperatura supera el umbral y si es un múltiplo de 4 superior al último registrado
+        if temperatura > 25 and (temperatura // 4) * 4 > ultimo_temperatura_guardada:
             # Insertar en la tabla 'temperatura' si supera el umbral
             cursor.execute(""" 
                 INSERT INTO temperatura (temperatura, fecha)
@@ -45,6 +56,8 @@ def guardar_temperatura(temperatura):
             """, (temperatura, fecha_actual))
             db_connection.commit()
             print(f"Temperatura guardada en 'temperatura': {fecha_actual}, {temperatura}°C")
+
+            # Actualizar la tabla 'temperatura_actual' con el último valor
             cursor.execute("""
                 INSERT INTO temperatura_actual (id, temperatura, fecha)
                 VALUES (1, %s, %s)
@@ -52,8 +65,12 @@ def guardar_temperatura(temperatura):
             """, (temperatura, fecha_actual, temperatura, fecha_actual))
             db_connection.commit()
             print(f"Temperatura guardada en 'temperatura_actual': {fecha_actual}, {temperatura}°C")
+
+            # Actualizar el último valor guardado con el múltiplo de 4 más cercano
+            ultimo_temperatura_guardada = (temperatura // 4) * 4
+
         else:
-            # Si no supera el umbral, insertar en la tabla 'temperatura_actual'
+            # Si no supera el umbral o ya se ha registrado una temperatura similar, solo actualizar 'temperatura_actual'
             cursor.execute("""
                 INSERT INTO temperatura_actual (id, temperatura, fecha)
                 VALUES (1, %s, %s)
@@ -61,22 +78,49 @@ def guardar_temperatura(temperatura):
             """, (temperatura, fecha_actual, temperatura, fecha_actual))
             db_connection.commit()
             print(f"Temperatura guardada en 'temperatura_actual': {fecha_actual}, {temperatura}°C")
+
     except mysql.connector.Error as error:
         print(f"Error al guardar temperatura: {error}")
 
+
 # Funciones para guardar otros datos en la base de datos (gas, RFID, etc.)
-def guardar_datos_gas(rango):
+from datetime import datetime
+import mysql.connector
+
+# Variable global para almacenar el último múltiplo de 500 guardado
+ultimo_rango_guardado = 0
+
+def guardar_datos_gas(rango, umbral_gas):
+    global ultimo_rango_guardado  # Usamos la variable global
+
     try:
-        fecha_actual = datetime.now().strftime('%Y-%m-%d')
-        hora_actual = datetime.now().strftime('%H:%M:%S')
-        cursor.execute(""" 
-            INSERT INTO sensores_humo (rango, fecha, hora)
-            VALUES (%s, %s, %s)
-        """, (rango, fecha_actual, hora_actual))
-        db_connection.commit()
-        print(f"Gas guardado: {fecha_actual} {hora_actual}, Rango: {rango}")
+        # Verificar si el rango supera el umbral y si es un múltiplo de 500 superior al último registrado
+        if rango > umbral_gas and (rango // 500) * 500 > ultimo_rango_guardado:
+            # Obtener la fecha y hora actuales
+            fecha_actual = datetime.now().strftime('%Y-%m-%d')  # Solo la fecha (YYYY-MM-DD)
+            hora_actual = datetime.now().strftime('%H:%M:%S')  # Solo la hora (HH:MM:SS)
+            
+            # Ejecutar la consulta SQL para insertar los datos
+            cursor.execute(""" 
+                INSERT INTO sensores_humo (rango, fecha, hora)
+                VALUES (%s, %s, %s)
+            """, (rango, fecha_actual, hora_actual))
+            
+            # Confirmar la transacción
+            db_connection.commit()
+            
+            # Imprimir mensaje de éxito
+            print(f"Gas guardado: {fecha_actual} {hora_actual}, Rango: {rango}")
+
+            # Actualizar el último rango guardado con el múltiplo de 500 más cercano
+            ultimo_rango_guardado = (rango // 500) * 500
+        else:
+            print(f"El valor de rango ({rango}) no supera el umbral ({umbral_gas}) o ya se ha registrado un rango mayor o igual a ese.")
+    
     except mysql.connector.Error as error:
+        # Manejo de errores
         print(f"Error al guardar datos de gas: {error}")
+
 
 # Configuración de conexiones
 db_connection = connectionBD()
@@ -126,7 +170,12 @@ try:
                     ser_rfid.write(b'1')
                 else:
                     ser_rfid.write(b'0')
-
+                if estado_acceso=="denegado":
+                     cursor.execute(""" 
+            INSERT INTO Tarjeta (codigo)
+            VALUES (%s)
+        """, (uid))
+        db_connection.commit()
         if ser_sensor.in_waiting > 0:
             linea_sensor = ser_sensor.readline().decode('utf-8').strip()
             print(f"Datos de sensores recibidos: {linea_sensor}")

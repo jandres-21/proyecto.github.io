@@ -185,14 +185,36 @@
   </div>
 </div>
 
+
+
 <script>
   // Lógica para leer la tarjeta RFID y rellenar el campo "tarjeta"
   document.getElementById('readRFID').addEventListener('click', function() {
-    // Aquí iría la lógica de lectura de tarjeta RFID
-    // Por ahora, simularemos la lectura con un valor de ejemplo:
-    const tarjeta = "123456789"; // Este es solo un ejemplo
-    document.getElementById('tarjeta').value = tarjeta;
+    // Hacemos la solicitud AJAX para obtener el último código de tarjeta desde el servidor
+    fetch('/obtener_targeta')  // URL del endpoint de tu servidor Flask
+      .then(response => response.json())
+      .then(data => {
+        if (data.codigo) {
+          // Si hay un código, lo asignamos a la variable 'tarjeta'
+          const tarjeta = data.codigo;
+          console.log("Código de la tarjeta:", tarjeta); // Aquí se muestra el código obtenido en consola
+
+          // Asignamos el valor de 'tarjeta' al campo de entrada con id 'tarjeta'
+          document.getElementById('tarjeta').value = tarjeta;
+        } else {
+          alert('No se encontró ningún código de tarjeta.');
+        }
+      })
+      .catch(error => {
+        console.error('Error al obtener el código de tarjeta:', error);
+        alert('Hubo un error al obtener el código de tarjeta.');
+      });
   });
+
+
+
+
+
 
   // Validar que las contraseñas coinciden antes de enviar el formulario
   document.getElementById('submitButton').addEventListener('click', function(e) {
