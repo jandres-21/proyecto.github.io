@@ -191,7 +191,7 @@ try:
                     # Solo guardar el primer registro cuando el gas supera el umbral
                     if gas > umbral_gas:
                         if not gas_superado:  # Solo registrar si no se ha registrado antes
-                            guardar_datos_gas(gas)
+                            guardar_datos_gas(gas,umbral_gas)
                             gas_superado = True
                     else:
                         gas_superado = False  # Reinicia la bandera si vuelve a valores normales
