@@ -71,10 +71,6 @@ def guardar_temperatura(temperatura):
     except mysql.connector.Error as error:
         print(f"Error al guardar temperatura: {error}")
 
-
-
-
-
 # Variable global para almacenar el último múltiplo de 500 guardado
 ultimo_rango_guardado = 0
 
@@ -109,6 +105,26 @@ def guardar_datos_gas(rango, umbral_gas):
         # Manejo de errores
         print(f"Error al guardar datos de gas: {error}")
 
+# Función para guardar datos de voltaje y corriente
+def guardar_datos_electricos(voltaje, corriente):
+    try:
+        # Obtener la fecha y hora actuales
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        hora_actual = datetime.now().strftime('%H:%M:%S')
+
+        # Ejecutar la consulta SQL para insertar los datos
+        cursor.execute("""
+            INSERT INTO datos_electricos (voltaje, corriente, fecha, hora)
+            VALUES (%s, %s, %s, %s)
+        """, (voltaje, corriente, fecha_actual, hora_actual))
+
+        # Confirmar la transacción
+        db_connection.commit()
+
+        # Imprimir mensaje de éxito
+        print(f"Datos eléctricos guardados: {voltaje} V, {corriente} A - {fecha_actual} {hora_actual}")
+    except mysql.connector.Error as error:
+        print(f"Error al guardar datos eléctricos: {error}")
 
 # Configuración de conexiones
 db_connection = connectionBD()
@@ -137,7 +153,6 @@ def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
     except mysql.connector.Error as error:
         print(f"Error al guardar datos RFID: {error}")
 
-
 # Loop principal
 try:
     while ser_rfid and ser_sensor and ser_rfid.is_open and ser_sensor.is_open:
@@ -159,7 +174,7 @@ try:
                 else:
                     ser_rfid.write(b'0')
                 if estado_acceso == "denegado":
-    # Insertar el registro en la tabla "Targeta"
+                    # Insertar el registro en la tabla "Targeta"
                     cursor.execute(""" 
                         INSERT INTO Targeta (codigo)
                         VALUES (%s)
@@ -177,11 +192,17 @@ try:
             print(f"Datos de sensores recibidos: {linea_sensor}")
 
             # Validar formato con expresión regular
-            match = re.match(r"temperatura:\s*([\d.]+),\s*gas:\s*(\d+)", linea_sensor, re.IGNORECASE)
+            match = re.match(
+                r"Temperatura:\s*([\d.]+)\s*C,\s*Gas:\s*(\d+)\s*Voltaje:\s*([\d.]+)\s*V\s*Corriente:\s*([\d.]+)\s*A",
+                linea_sensor,
+                re.IGNORECASE
+            )
             if match:
                 try:
                     temperatura = float(match.group(1))
                     gas = int(match.group(2))
+                    voltaje = float(match.group(3))
+                    corriente = float(match.group(4))
 
                     # Guardar la temperatura en la tabla adecuada
                     guardar_temperatura(temperatura)
@@ -189,10 +210,13 @@ try:
                     # Solo guardar el primer registro cuando el gas supera el umbral
                     if gas > umbral_gas:
                         if not gas_superado:  # Solo registrar si no se ha registrado antes
-                            guardar_datos_gas(gas,umbral_gas)
+                            guardar_datos_gas(gas, umbral_gas)
                             gas_superado = True
                     else:
                         gas_superado = False  # Reinicia la bandera si vuelve a valores normales
+
+                    # Guardar los datos de voltaje y corriente
+                    guardar_datos_electricos(voltaje, corriente)
 
                 except ValueError as e:
                     print(f"Error al convertir valores: {e}")
