@@ -46,10 +46,11 @@
               <div class="mb-3 col-md-6">
                 <label for="tarjeta" class="form-label">Tarjeta</label>
                 <div class="input-group">
+                  <!-- Se cambia el tipo a "password" para ocultar los caracteres por defecto -->
                   <input type="password" class="form-control" name="tarjeta" id="tarjeta" required readonly value="" />
-                  <button class="btn btn-outline-secondary" type="button" id="toggleTarjeta">
-                    <i class="bx bx-hide"></i>
-                  </button>
+                  <span class="input-group-text cursor-pointer" id="toggleTarjeta">
+                    <i class="bx bx-show"></i>
+                  </span>
                 </div>
                 <!-- Botón para leer tarjeta RFID -->
                 <button type="button" id="readRFID" class="btn btn-secondary mt-2">Leer tarjeta RFID</button>
@@ -73,6 +74,56 @@
                 </select>
               </div>
             </div>
+            <div class="row">
+              <div class="mt-3 col-md-6">
+                <label for="area" class="form-label">Area</label>
+                <select class="form-select" name="selectArea" {% if dataLogin.rol == 2 %} disabled {% endif %}>
+                  {% for area in areas %}
+                  <option value="{{ area.id_area }}">{{ area.nombre_area }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mt-3 col-md-6">
+                <label for="rol" class="form-label">Rol</label>
+                <select class="form-select" name="selectRol" {% if dataLogin.rol == 2 %} disabled {% endif %}>
+                  {% for rol in roles %}
+                  <option value="{{ rol.id_rol }}">{{ rol.nombre_rol }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <!-- Campos de contraseña -->
+            <div class="mb-3 form-password-toggle mt-3">
+              <label class="form-label" for="pass_user">Clave</label>
+              <div class="input-group input-group-merge">
+                <input type="password" class="form-control" name="pass_user" id="pass_user"
+                  placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" aria-describedby="password"
+                  required />
+                <span class="input-group-text cursor-pointer">
+                  <i class="bx bx-hide"></i>
+                </span>
+              </div>
+              <div class="text-danger" id="passwordError" style="display:none;">
+                La contraseña debe tener al menos 8 caracteres, incluyendo una mayúscula, una minúscula, un número y un carácter especial valido (!@#$%^&*+\-).
+              </div>
+            </div>
+            
+            <!-- Campo de repetir contraseña -->
+            <div class="mb-3 form-password-toggle mt-3">
+              <label class="form-label" for="pass_user_repeat">Repetir Clave</label>
+              <div class="input-group input-group-merge">
+                <input type="password" class="form-control" name="pass_user_repeat" id="pass_user_repeat"
+                  placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" aria-describedby="password"
+                  required />
+                <span class="input-group-text cursor-pointer">
+                  <i class="bx bx-hide"></i>
+                </span>
+              </div>
+              <div class="text-danger" id="passwordRepeatError" style="display:none;">
+                Las contraseñas no coinciden.
+              </div>
+            </div>
 
             <button class="btn btn-primary w-100" id="submitButton">
               Crear cuenta
@@ -93,21 +144,12 @@
 </div>
 
 <script>
-  // --- Función para alternar visibilidad del campo "Tarjeta" ---
-  document.getElementById('toggleTarjeta').addEventListener('click', function() {
-    const tarjetaInput = document.getElementById('tarjeta');
-    const icon = this.querySelector('i');
-
-    if (tarjetaInput.type === "password") {
-      tarjetaInput.type = "text";
-      icon.classList.remove('bx-hide');
-      icon.classList.add('bx-show');
-    } else {
-      tarjetaInput.type = "password";
-      icon.classList.remove('bx-show');
-      icon.classList.add('bx-hide');
-    }
-  });
+  // Función para restaurar el botón a su estado original.
+  function restoreButton() {
+    readRFIDButton.textContent = originalText;
+    readRFIDButton.classList.remove('btn-warning');
+    readRFIDButton.classList.add('btn-secondary');
+  }
 
   // --- Lógica para el manejo del botón "Leer tarjeta RFID" con polling ---
   const readRFIDButton = document.getElementById('readRFID');
@@ -118,16 +160,22 @@
   tarjetaInput.value = "";
 
   readRFIDButton.addEventListener('click', function() {
+    // Cambiar el texto y el color del botón al iniciar la lectura.
     readRFIDButton.textContent = "Leyendo tarjeta...";
     readRFIDButton.classList.remove('btn-secondary');
     readRFIDButton.classList.add('btn-warning');
 
-    const pollingInterval = 1000;
+    // Iniciar polling: se realizará una consulta cada 1 segundo.
+    const pollingInterval = 1000; // 1 segundo
     let pollingTimer = setInterval(fetchCodigo, pollingInterval);
     
+    // Se establece un tiempo máximo de 10 segundos.
     let timeoutTimer = setTimeout(() => {
+      // Si se llega a los 10 segundos sin obtener un código nuevo, se detiene el polling.
       clearInterval(pollingTimer);
+      // Se asegura que el campo quede en blanco.
       tarjetaInput.value = "";
+      // Restaurar el botón a su estado original.
       restoreButton();
     }, 10000);
 
@@ -135,25 +183,89 @@
       fetch('/obtener_targeta')
         .then(response => response.json())
         .then(data => {
+          // Si se encuentra un código (se asume que un código distinto de vacío es válido)
           if (data.codigo && data.codigo.trim() !== "") {
+            // Asignar el código obtenido al campo "tarjeta"
             tarjetaInput.value = data.codigo;
+            // Se detiene el polling y se cancela el timeout.
             clearInterval(pollingTimer);
             clearTimeout(timeoutTimer);
+            // Restaurar el botón a su estado original.
             restoreButton();
           }
         })
         .catch(error => {
           console.error('Error al obtener el código de tarjeta:', error);
+          // En caso de error, se sigue intentando hasta el tiempo máximo.
         });
     }
   });
 
-  function restoreButton() {
-    readRFIDButton.textContent = originalText;
-    readRFIDButton.classList.remove('btn-warning');
-    readRFIDButton.classList.add('btn-secondary');
+  // --- Toggle para mostrar/ocultar el contenido del campo "tarjeta" ---
+  document.getElementById('toggleTarjeta').addEventListener('click', function() {
+    const tarjetaField = document.getElementById('tarjeta');
+    if (tarjetaField.type === "password") {
+      tarjetaField.type = "text";
+      this.innerHTML = '<i class="bx bx-hide"></i>';
+    } else {
+      tarjetaField.type = "password";
+      this.innerHTML = '<i class="bx bx-show"></i>';
+    }
+  });
+
+  // --- Validación de contraseñas y otros campos ---
+  document.getElementById('submitButton').addEventListener('click', function(e) {
+    const passUser = document.getElementById('pass_user').value;
+    const passUserRepeat = document.getElementById('pass_user_repeat').value;
+    
+    if (passUser !== passUserRepeat) {
+      e.preventDefault(); // Evitar el envío del formulario
+      document.getElementById('passwordRepeatError').style.display = 'block';
+    }
+  });
+
+  function validateForm() {
+    const name = document.getElementById('name').value;
+    const surname = document.getElementById('surname').value;
+    const cedula = document.getElementById('cedula').value;
+    const passUser = document.getElementById('pass_user').value;
+    let valid = true;
+
+    const nameRegex = /^[a-zA-Z]+$/;
+    const surnameRegex = /^[a-zA-Z]+$/;
+    const cedulaRegex = /^\d{10}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*+\-.,:;|°]).{8,}$/;
+
+    if (!nameRegex.test(name)) {
+      document.getElementById('nameError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('nameError').style.display = 'none';
+    }
+
+    if (!surnameRegex.test(surname)) {
+      document.getElementById('surnameError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('surnameError').style.display = 'none';
+    }
+
+    if (!cedulaRegex.test(cedula)) {
+      document.getElementById('cedulaError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('cedulaError').style.display = 'none';
+    }
+
+    if (!passwordRegex.test(passUser)) {
+      document.getElementById('passwordError').style.display = 'block';
+      valid = false;
+    } else {
+      document.getElementById('passwordError').style.display = 'none';
+    }
+
+    return valid;
   }
 </script>
 
 {% endblock %}
-
