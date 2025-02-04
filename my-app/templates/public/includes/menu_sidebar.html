@@ -60,10 +60,17 @@
             <div data-i18n="Tables">Control de Acceso</div>
           </a>
         </li>
-        <li class="menu-item {% if request.path == '/sensor_humo' %} active {% endif %}">
+        <li class="menu-item {% if request.path == '/sensores-humo' %} active {% endif %}">
           <a href="/sensores-humo" class="menu-link">
             <i class="menu-icon bi bi-cloud-fog2"></i> <!-- Icono de humo -->
             <div data-i18n="Tables">Sensor de Humo</div>
+          </a>
+        </li>
+        <!-- Nuevo apartado: Comsumo Electrico -->
+        <li class="menu-item {% if request.path == '/consumo-electrico' %} active {% endif %}">
+          <a href="/consumo-electrico" class="menu-link">
+            <i class="menu-icon bi bi-lightning-charge"></i> <!-- Icono de corriente -->
+            <div data-i18n="Tables">Comsumo Electrico</div>
           </a>
         </li>
       </ul>

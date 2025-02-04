@@ -1,0 +1,45 @@
+{% extends 'public/base_cpanel.html' %}
+
+{% block title %}Consumo Eléctrico{% endblock %}
+
+{% block body %}
+<div class="card content_consignaciones" style="border-radius: 0px !important">
+  <section id="datosConsumoElectrico">
+    <h2 class="text-center mt-5 mb-5">
+      Registro de Consumo Eléctrico
+      <hr />
+    </h2>
+
+    <div class="table-responsive text-nowrap">
+      <table class="table table-hover" id="tablaConsumoElectrico">
+        <thead>
+          <tr style="background-color: #ddd">
+            <th>Fecha</th>
+            <th>Consumo Eléctrico</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if datos_consumo_electrico is defined and datos_consumo_electrico %}
+            {% for registro in datos_consumo_electrico %}
+            <tr>
+              <td>
+                {% if registro.fecha is not none %}
+                  {{ registro.fecha.strftime('%Y-%m-%d') }}
+                {% else %}
+                  Sin fecha
+                {% endif %}
+              </td>
+              <td>{{ registro.consumo if registro.consumo is not none else 'Sin datos' }}</td>
+            </tr>
+            {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="2" class="text-center">No existen registros de consumo eléctrico</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -25,6 +25,20 @@
         margin: 0; /* Elimina márgenes adicionales */
         color: #6c757d; /* Texto gris oscuro */
       }
+      .image-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+        gap: 15px; /* Espacio entre imágenes */
+        justify-content: center;
+        padding: 20px;
+      }
+      .image-grid img {
+        width: 100%; /* Ajuste responsivo */
+        max-height: 400px; /* Aumento en la altura máxima */
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      }
     </style>
     {% endblock %}
   </head>
@@ -52,6 +66,16 @@
                 <h1>BIENVENIDO USUARIO</h1>
               </div>
               {% endif %}
+
+              <!-- Cuadrícula de imágenes -->
+              <div class="image-grid">
+                <img src="{{ url_for('static', filename='Diseño/1.jpg') }}" alt="Imagen 1">
+                <img src="{{ url_for('static', filename='Diseño/6.jpg') }}" alt="Imagen 6"> <!-- Imagen 6 ahora en segunda posición -->
+                <img src="{{ url_for('static', filename='Diseño/3.jpg') }}" alt="Imagen 3">
+                <img src="{{ url_for('static', filename='Diseño/4.jpg') }}" alt="Imagen 4">
+                <img src="{{ url_for('static', filename='Diseño/5.jpg') }}" alt="Imagen 5">
+                <img src="{{ url_for('static', filename='Diseño/2.jpg') }}" alt="Imagen 2"> <!-- Imagen 2 ahora en sexta posición -->
+              </div>
 
               <!--fin del bloque-->
               {% endblock %}

@@ -9,6 +9,8 @@ import time
 import threading
 from controllers.funciones_home import eliminarUsuario
 from flask import request, jsonify
+from datetime import datetime
+
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -319,3 +321,10 @@ def obtener_targeta():
         return jsonify({'codigo': ultimo_codigo})
     else:
         return jsonify({'error': 'No se encontró ningún código de tarjeta.'}), 404
+    
+
+
+@app.route("/consumo-electrico", methods=['GET'])
+def consumo_electrico():
+    dataLogin = session.get("dataLogin")  # Obtén la variable de sesión o base de datos
+    return render_template('public/consumo_electrico.html', dataLogin=dataLogin, datos_consumo_electrico=[])
