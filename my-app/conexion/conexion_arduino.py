@@ -169,9 +169,7 @@ try:
                     # Esperar 5 segundos antes de eliminar el registro
                     time.sleep(10)
                     # Eliminar el registro después de 3 segundos
-                    cursor.execute(""" 
-                        truncate table Targeta
-                    """, (uid,))
+                    cursor.execute("TRUNCATE TABLE Targeta")
                     db_connection.commit()
                     print(f"Registro con código {uid} eliminado después de 3 segundos.")
         if ser_sensor.in_waiting > 0:
