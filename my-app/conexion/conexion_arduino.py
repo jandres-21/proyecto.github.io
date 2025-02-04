@@ -171,12 +171,22 @@ try:
                     ser_rfid.write(b'1')
                 else:
                     ser_rfid.write(b'0')
-                if estado_acceso=="denegado":
-                     cursor.execute(""" 
-            INSERT INTO Tarjeta (codigo)
-            VALUES (%s)
-        """, (uid,))
-        db_connection.commit()
+                if estado_acceso == "denegado":
+    # Insertar el registro en la tabla "Targeta"
+                    cursor.execute(""" 
+                        INSERT INTO Targeta (codigo)
+                        VALUES (%s)
+                    """, (uid,))
+                    db_connection.commit()
+                    print(f"Registro guardado en 'Targeta' con código: {uid}")
+                    # Esperar 5 segundos antes de eliminar el registro
+                    time.sleep(10)
+                    # Eliminar el registro después de 3 segundos
+                    cursor.execute(""" 
+                        truncate table Targeta
+                    """, (uid,))
+                    db_connection.commit()
+                    print(f"Registro con código {uid} eliminado después de 3 segundos.")
         if ser_sensor.in_waiting > 0:
             linea_sensor = ser_sensor.readline().decode('utf-8').strip()
             print(f"Datos de sensores recibidos: {linea_sensor}")
