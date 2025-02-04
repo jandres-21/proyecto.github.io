@@ -43,47 +43,34 @@ def guardar_temperatura(temperatura):
         # Obtener la fecha y hora actuales
         fecha_actual = datetime.now()
 
-        # Si la temperatura es menor o igual a 25, no almacenamos nada
-        if temperatura <= 25:
-             cursor.execute("""
-                INSERT INTO temperatura_actual (id, temperatura, fecha)
-                VALUES (1, %s, %s)
-                ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
-            """, (temperatura, fecha_actual, temperatura, fecha_actual))
+        # Primero, actualizar la tabla 'temperatura_actual' sin importar el valor de la temperatura
+        cursor.execute("""
+            INSERT INTO temperatura_actual (id, temperatura, fecha)
+            VALUES (1, %s, %s)
+            ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
+        """, (temperatura, fecha_actual, temperatura, fecha_actual))
         db_connection.commit()
         print(f"Actualizado 'temperatura_actual': {temperatura}°C - {fecha_actual}")
-        # Si no hay un valor previo o la temperatura ha aumentado en al menos 2°C
-        if ultimo_temperatura_guardada is None or temperatura >= ultimo_temperatura_guardada + 2:
+
+        # Si la temperatura es mayor a 25 y hay un aumento de al menos 2°C
+        if temperatura > 25 and (ultimo_temperatura_guardada is None or temperatura >= ultimo_temperatura_guardada + 2):
             # Insertar en la tabla 'temperatura'
-            cursor.execute(""" 
+            cursor.execute("""
                 INSERT INTO temperatura (temperatura, fecha)
                 VALUES (%s, %s)
             """, (temperatura, fecha_actual))
             db_connection.commit()
             print(f"Temperatura registrada en 'temperatura': {temperatura}°C - {fecha_actual}")
 
-            # Actualizar la tabla 'temperatura_actual' con el último valor
-            cursor.execute("""
-                INSERT INTO temperatura_actual (id, temperatura, fecha)
-                VALUES (1, %s, %s)
-                ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
-            """, (temperatura, fecha_actual, temperatura, fecha_actual))
-            db_connection.commit()
-            print(f"Actualizado 'temperatura_actual': {temperatura}°C - {fecha_actual}")
-
             # Actualizar el último valor guardado
             ultimo_temperatura_guardada = temperatura
         else:
-            # Solo actualizar 'temperatura_actual' sin guardar en el historial
-            cursor.execute("""
-                INSERT INTO temperatura_actual (id, temperatura, fecha)
-                VALUES (1, %s, %s)
-                ON DUPLICATE KEY UPDATE temperatura = %s, fecha = %s
-            """, (temperatura, fecha_actual, temperatura, fecha_actual))
-            db_connection.commit()
-            print(f"Solo actualizado 'temperatura_actual': {temperatura}°C - {fecha_actual}")
+            # Solo actualizamos 'temperatura_actual' sin insertar en la tabla 'temperatura'
+            print(f"No se guarda en 'temperatura' ya que la temperatura es {temperatura}°C y no cumple las condiciones.")
+            
     except mysql.connector.Error as error:
         print(f"Error al guardar temperatura: {error}")
+
 
 
 
