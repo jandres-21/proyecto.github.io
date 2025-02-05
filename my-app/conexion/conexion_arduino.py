@@ -106,6 +106,7 @@ def guardar_datos_gas(rango, umbral_gas):
         print(f"Error al guardar datos de gas: {error}")
 
 # Función para guardar datos de voltaje y corriente
+
 def guardar_datos_electricos(voltaje, corriente):
     try:
         connection = connectionBD()
@@ -119,21 +120,22 @@ def guardar_datos_electricos(voltaje, corriente):
         cursor.execute("""
             INSERT INTO consumo_actual (id, voltaje, corriente) 
             VALUES (1, %s, %s)
-            ON DUPLICATE KEY UPDATE voltaje = VALUES(voltaje), corriente = VALUES(corriente);
-        """, (voltaje, corriente))
+            ON DUPLICATE KEY UPDATE voltaje = %s, corriente = %s;
+        """, (voltaje, corriente, voltaje, corriente))
 
         # 🔹 Verificar si ha pasado una hora desde el último registro en "datos_electricos"
-        cursor.execute("SELECT MAX(fecha), MAX(hora) FROM datos_electricos;")
-        ultima_fecha, ultima_hora = cursor.fetchone()
+        cursor.execute("SELECT fecha, hora FROM datos_electricos ORDER BY fecha DESC, hora DESC LIMIT 1;")
+        ultima_medicion = cursor.fetchone()
 
-        if ultima_fecha and ultima_hora:
-            ultima_medicion = datetime.strptime(f"{ultima_fecha} {ultima_hora}", "%Y-%m-%d %H:%M:%S")
+        if ultima_medicion:
+            ultima_fecha, ultima_hora = ultima_medicion
+            ultima_medicion_dt = datetime.strptime(f"{ultima_fecha} {ultima_hora}", "%Y-%m-%d %H:%M:%S")
         else:
-            ultima_medicion = None
+            ultima_medicion_dt = None
 
         ahora = datetime.now()
 
-        if not ultima_medicion or (ahora - ultima_medicion >= timedelta(hours=1)):
+        if not ultima_medicion_dt or (ahora - ultima_medicion_dt >= timedelta(hours=1)):
             # Insertar nuevo registro cada hora en "datos_electricos"
             cursor.execute("""
                 INSERT INTO datos_electricos (voltaje, corriente, fecha, hora)
@@ -152,6 +154,7 @@ def guardar_datos_electricos(voltaje, corriente):
             cursor.close()
         if connection:
             connection.close()
+
 
 # Configuración de conexiones
 db_connection = connectionBD()
