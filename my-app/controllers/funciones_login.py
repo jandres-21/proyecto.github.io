@@ -37,40 +37,27 @@ def recibeInsertRegisterUser(cedula, name, surname, id_area, id_rol, pass_user,t
 
 
 # Validando la data del Registros para el login
-def validarDataRegisterLogin(cedula, tarjeta, name, surname, pass_user):
+def validarDataRegisterLogin(cedula, name, surname, pass_user):
     try:
         with connectionBD() as conexion_MySQLdb:
             with conexion_MySQLdb.cursor(dictionary=True) as cursor:
-                # Verificar si la cédula ya está registrada
-                querySQL_cedula = "SELECT * FROM usuarios WHERE cedula = %s"
-                cursor.execute(querySQL_cedula, (cedula,))
-                user_cedula = cursor.fetchone()  # Obtener la primera fila de resultados
+                querySQL = "SELECT * FROM usuarios WHERE cedula = %s"
+                cursor.execute(querySQL, (cedula,))
+                userBD = cursor.fetchone()  # Obtener la primera fila de resultados
 
-                if user_cedula is not None:
-                    flash('Ya existe una cuenta con este número de cédula.', 'error')
+                if userBD is not None:
+                    flash('Ya existe una cuenta con este numero de cedula', 'error')
                     return False
-
-                # Verificar si la tarjeta ya está registrada
-                querySQL_tarjeta = "SELECT * FROM usuarios WHERE tarjeta = %s"
-                cursor.execute(querySQL_tarjeta, (tarjeta,))
-                user_tarjeta = cursor.fetchone()  
-
-                if user_tarjeta is not None:
-                    flash('Ya existe una cuenta con esta tarjeta.', 'error')
+                elif not cedula or not name or not pass_user:
+                    flash('por favor llene los campos del formulario.', 'error')
                     return False
+                else:
+                    # La cuenta no existe y los datos del formulario son válidos, puedo realizar el Insert
+                    return True
                 
-                # Validar que los campos obligatorios no estén vacíos
-                if not cedula or not tarjeta or not name or not pass_user:
-                    flash('Por favor, llene todos los campos del formulario.', 'error')
-                    return False
-
-                # Si pasa todas las validaciones, permitir el registro
-                return True
-
     except Exception as e:
-        print(f"Error en validarDataRegisterLogin: {e}")
-        return False
-
+        print(f"Error en validarDataRegisterLogin : {e}")
+        return []
 
 
 def info_perfil_session(id):

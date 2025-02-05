@@ -34,45 +34,39 @@
                         <tbody>
                             {% for usuario in resp_usuariosBD %}
                             <tr>
-                                <td>{{ usuario.cedula}}</td>
-                                <td>{{ usuario.nombre_usuario}} {{usuario.apellido_usuario}}</td>
+                                <td>{{ usuario.cedula }}</td>
+                                <td>{{ usuario.nombre_usuario }} {{ usuario.apellido_usuario }}</td>
                                 <td>
                                     {% for area in areas %}
                                     {% if area.id_area == usuario.id_area %}
-                                    {{area.nombre_area}}
+                                    {{ area.nombre_area }}
                                     {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>
                                     {% for rol in roles %}
                                     {% if rol.id_rol == usuario.id_rol %}
-                                    {{ rol.nombre_rol}}
+                                    {{ rol.nombre_rol }}
                                     {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>
-                                    <!-- Campo de tarjeta con un tamaño más pequeño y contenedor en línea -->
                                     <div style="display: inline-flex; align-items: center;">
                                         <input type="password" value="{{ usuario.tarjeta }}" id="tarjeta_{{ usuario.id_usuario }}" class="form-control" style="width: 150px;" readonly />
-                                        <span class="bi bi-eye" id="toggleTarjeta_{{ usuario.id_usuario }}" style="cursor: pointer; margin-left: 5px;"></span>
+                                        <span class="bi bi-eye toggle-tarjeta" data-id="{{ usuario.id_usuario }}" style="cursor: pointer; margin-left: 5px;"></span>
                                     </div>
                                 </td>
-                                <td>{{ usuario.estado}} </td>
-                                <td>{{ usuario.genero}} </td>
+                                <td>{{ usuario.estado }} </td>
+                                <td>{{ usuario.genero }} </td>
                                 <td>
-                                    <a
-                                        href="/mi-perfil/{{usuario.id_usuario}}"
-                                        class="btn btn-success btn-sm"
-                                        tooltip="Actualizar Registro">
+                                    <a href="/mi-perfil/{{ usuario.id_usuario | default('0') }}" class="btn btn-success btn-sm" tooltip="Actualizar Registro">
                                         <i class="bi bi-arrow-clockwise"></i>
                                         Actualizar
                                     </a>
 
-                                    <!-- Solo muestra el botón de eliminar si el usuario no es "Admin Admin" -->
                                     {% if usuario.nombre_usuario != 'Admin' or usuario.apellido_usuario != 'Admin' %}
-                                    <!-- Formulario para eliminar usuario -->
                                     <form action="/borrar-usuario/{{ usuario.id_usuario }}" method="POST" style="display:inline;" id="form_eliminar_{{ usuario.id_usuario }}">
-                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar a {{ usuario.nombre_usuario }}" onclick="confirmarEliminar({{ usuario.id_usuario }})">
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar a {{ usuario.nombre_usuario }}" onclick="confirmarEliminar('{{ usuario.id_usuario }}')">
                                             <i class="bi bi-trash3"></i> Eliminar
                                         </button>
                                     </form>
@@ -94,39 +88,37 @@
             </div>
         </div>
     {% endif %}
-<!--Fin del Block-->
 {% endblock %}
 
-<!--Script Custom-->
 {% block customJS %}
 <script>
-    // Función para mostrar/ocultar la tarjeta
-    {% for usuario in resp_usuariosBD %}
-    document.getElementById("toggleTarjeta_{{ usuario.id_usuario }}").addEventListener("click", function() {
-        var tarjetaInput = document.getElementById("tarjeta_{{ usuario.id_usuario }}");
-        var icon = this;
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelectorAll(".toggle-tarjeta").forEach(function(toggleIcon) {
+            toggleIcon.addEventListener("click", function() {
+                var id = this.getAttribute("data-id");
+                var tarjetaInput = document.getElementById("tarjeta_" + id);
 
-        if (tarjetaInput.type === "password") {
-            tarjetaInput.type = "text";
-            icon.classList.remove("bi-eye");
-            icon.classList.add("bi-eye-slash");
-        } else {
-            tarjetaInput.type = "password";
-            icon.classList.remove("bi-eye-slash");
-            icon.classList.add("bi-eye");
-        }
+                if (tarjetaInput.type === "password") {
+                    tarjetaInput.type = "text";
+                    this.classList.remove("bi-eye");
+                    this.classList.add("bi-eye-slash");
+                } else {
+                    tarjetaInput.type = "password";
+                    this.classList.remove("bi-eye-slash");
+                    this.classList.add("bi-eye");
+                }
+            });
+        });
     });
-    {% endfor %}
 
-    // Función de confirmación antes de eliminar
     function confirmarEliminar(id) {
+        if (!id) {
+            console.error("ID de usuario inválido");
+            return;
+        }
         var respuesta = confirm("¿Estás seguro que deseas eliminar este usuario?");
         if (respuesta) {
-            // Si el usuario confirma, se envía el formulario de eliminación
             document.getElementById("form_eliminar_" + id).submit();
-        } else {
-            // Si el usuario cancela, no hace nada
-            return false;
         }
     }
 </script>
