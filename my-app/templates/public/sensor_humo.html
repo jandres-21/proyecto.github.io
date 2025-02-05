@@ -19,7 +19,7 @@
       <table class="table table-hover" id="tablaSensoresHumo">
         <thead>
           <tr style="background-color: #ddd">
-            <th>Fecha</th>z
+            <th>Fecha</th>
             <th>Hora</th>
             <th>Registro</th>
           </tr>
@@ -27,9 +27,10 @@
         <tbody>
           {% for registro in datos_sensores_humo %}
           <tr>
-            <td>{{ registro.fecha.strftime('%Y-%m-%d') }}</td> <!-- Muestra solo la fecha -->
-            <td>{{ registro.fecha.strftime('%H:%M:%S') }}</td> <!-- Muestra solo la hora -->
-            <td>{{ registro.rango }}</td>
+            <!-- Muestra solo la fecha con el formato YYYY-MM-DD -->
+            <td>{{ registro.fecha.strftime('%Y-%m-%d') }}</td>
+            <td>{{ registro.hora }}</td> <!-- Muestra la hora como está -->
+            <td>{{ registro.rango }}</td> <!-- Muestra el rango -->
           </tr>
           {% else %}
           <tr>
@@ -86,7 +87,7 @@
         response.datos_sensores_humo.forEach(function(registro) {
           var fecha = new Date(registro.fecha);
           var formattedFecha = fecha.toISOString().split('T')[0]; // Extrae solo la fecha
-          var formattedHora = fecha.toTimeString().split(' ')[0]; // Extrae solo la hora
+          var formattedHora = registro.hora; // Usa la hora tal como está en la base de datos
 
           var row = "<tr><td>" + formattedFecha + "</td><td>" + formattedHora + "</td><td>" + registro.rango + "</td></tr>";
           tabla.append(row);

@@ -257,20 +257,18 @@ def obtenerDatosSensoresHumo(page=1, per_page=20):
             offset = (page - 1) * per_page
 
             # Consulta SQL con paginación
-            query = "SELECT * FROM sensores_humo ORDER BY fecha DESC LIMIT %s OFFSET %s;"
+            query = "SELECT fecha, hora, rango FROM sensores_humo ORDER BY fecha DESC LIMIT %s OFFSET %s;"
             cursor.execute(query, (per_page, offset))
 
             # Obtener los resultados
             datos = cursor.fetchall()
 
-            # Obtener el último registro
-            ultimo_registro = datos[0] if datos else None
             cursor.close()
             connection.close()
 
             # Comprobar si el último registro tiene un valor mayor a 100
             supera_100 = False
-            if ultimo_registro and float(ultimo_registro['rango']) > 100:
+            if datos and float(datos[0]['rango']) > 100:
                 supera_100 = True
 
             return datos, supera_100, total_registros
@@ -278,6 +276,8 @@ def obtenerDatosSensoresHumo(page=1, per_page=20):
     except mysql.connector.Error as error:
         print(f"Error al obtener los datos de sensores de humo: {error}")
         return [], False, 0
+
+
 @app.route("/sensores-humo", methods=['GET'])
 def sensores_humo():
     if 'conectado' in session:
@@ -286,7 +286,7 @@ def sensores_humo():
         per_page = 20
 
         # Obtener datos paginados
-        datos_sensores_humo, supera_100, total_registros = obtenerDatosSensoresHumo(page, )
+        datos_sensores_humo, supera_100, total_registros = obtenerDatosSensoresHumo(page, per_page)
 
         # Calcular total de páginas correctamente
         total_paginas = (total_registros // per_page) + (1 if total_registros % per_page > 0 else 0)
@@ -300,7 +300,7 @@ def sensores_humo():
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
-    
+
 
 
 def ObtenerTargeta():
