@@ -108,23 +108,50 @@ def guardar_datos_gas(rango, umbral_gas):
 # Función para guardar datos de voltaje y corriente
 def guardar_datos_electricos(voltaje, corriente):
     try:
+        connection = connectionBD()
+        cursor = connection.cursor()
+
         # Obtener la fecha y hora actuales
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
         hora_actual = datetime.now().strftime('%H:%M:%S')
 
-        # Ejecutar la consulta SQL para insertar los datos
+        # 🔹 Actualizar la tabla "consumo_actual" con los datos en tiempo real (1 solo registro)
         cursor.execute("""
-            INSERT INTO datos_electricos (voltaje, corriente, fecha, hora)
-            VALUES (%s, %s, %s, %s)
-        """, (voltaje, corriente, fecha_actual, hora_actual))
+            INSERT INTO consumo_actual (id, voltaje, corriente) 
+            VALUES (1, %s, %s)
+            ON DUPLICATE KEY UPDATE voltaje = VALUES(voltaje), corriente = VALUES(corriente);
+        """, (voltaje, corriente))
+
+        # 🔹 Verificar si ha pasado una hora desde el último registro en "datos_electricos"
+        cursor.execute("SELECT MAX(fecha), MAX(hora) FROM datos_electricos;")
+        ultima_fecha, ultima_hora = cursor.fetchone()
+
+        if ultima_fecha and ultima_hora:
+            ultima_medicion = datetime.strptime(f"{ultima_fecha} {ultima_hora}", "%Y-%m-%d %H:%M:%S")
+        else:
+            ultima_medicion = None
+
+        ahora = datetime.now()
+
+        if not ultima_medicion or (ahora - ultima_medicion >= timedelta(hours=1)):
+            # Insertar nuevo registro cada hora en "datos_electricos"
+            cursor.execute("""
+                INSERT INTO datos_electricos (voltaje, corriente, fecha, hora)
+                VALUES (%s, %s, %s, %s);
+            """, (voltaje, corriente, fecha_actual, hora_actual))
+            print(f"✅ Registro horario guardado en datos_electricos: {voltaje} V, {corriente} A - {fecha_actual} {hora_actual}")
 
         # Confirmar la transacción
-        db_connection.commit()
+        connection.commit()
 
-        # Imprimir mensaje de éxito
-        print(f"Datos eléctricos guardados: {voltaje} V, {corriente} A - {fecha_actual} {hora_actual}")
     except mysql.connector.Error as error:
-        print(f"Error al guardar datos eléctricos: {error}")
+        print(f"❌ Error al guardar datos eléctricos: {error}")
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 # Configuración de conexiones
 db_connection = connectionBD()

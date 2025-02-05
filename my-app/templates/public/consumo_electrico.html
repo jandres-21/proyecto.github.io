@@ -5,19 +5,20 @@
 {% block body %}
 <div class="card content_consignaciones" style="border-radius: 0px !important">
   <section id="datosElectricos">
-    <h2 class="text-center mt-5 mb-5">
-      Registro de Consumo Eléctrico
+
+    <!-- ✅ Sección de Consumo Actual -->
+    <h3 class="text-center mt-4">🔌 Consumo Actual</h3>
+    <div class="text-center mb-4">
+      <strong>Voltaje:</strong> <span id="voltaje_actual">Cargando...</span> V |
+      <strong>Corriente:</strong> <span id="corriente_actual">Cargando...</span> A
+    </div>
+
+    <h2 class="text-center mt-4 mb-4">
+      Registro de Consumo por Hora
       <hr />
     </h2>
 
-    <!-- Sección para mostrar el consumo actual en tiempo real -->
-    <div class="text-center mb-4">
-      <h4>Consumo Actual</h4>
-      <p>Voltaje: <span id="voltaje_actual">--</span> V | Corriente: <span id="corriente_actual">--</span> A</p>
-    </div>
-
     <div class="table-responsive text-nowrap">
-      <h3 class="text-center mb-3">Registro de Consumo por Hora</h3> <!-- Nombre de la tabla cambiado -->
       <table class="table table-hover" id="tablaDatosElectricos">
         <thead>
           <tr style="background-color: #ddd">
@@ -46,7 +47,7 @@
       </table>
     </div>
 
-    <!-- Paginación -->
+    <!-- ✅ Paginación mejorada -->
     <nav aria-label="Page navigation">
       <ul class="pagination justify-content-center mt-3">
         {% if page > 1 %}
@@ -58,12 +59,12 @@
         {% set max_pages = 5 %}
         {% set start_page = page - max_pages // 2 %}
         {% set end_page = page + max_pages // 2 %}
-        
+
         {% if start_page < 1 %}
           {% set start_page = 1 %}
           {% set end_page = max_pages %}
         {% endif %}
-        
+
         {% if end_page > total_paginas %}
           {% set end_page = total_paginas %}
           {% set start_page = total_paginas - max_pages + 1 %}
@@ -106,19 +107,21 @@
   </section>
 </div>
 
+<!-- ✅ JavaScript para actualizar datos en tiempo real -->
 <script>
   function actualizarConsumoActual() {
-    fetch("{{ url_for('consumo_actual') }}")
+    fetch("{{ url_for('obtener_consumo_actual') }}")
       .then(response => response.json())
       .then(data => {
-        document.getElementById("voltaje_actual").textContent = data.voltaje || "--";
-        document.getElementById("corriente_actual").textContent = data.corriente || "--";
+        document.getElementById("voltaje_actual").innerText = data.voltaje;
+        document.getElementById("corriente_actual").innerText = data.corriente;
       })
-      .catch(error => console.error("Error al obtener el consumo actual:", error));
+      .catch(error => console.error("Error obteniendo consumo actual:", error));
   }
 
-  // Actualiza cada 5 segundos
+  // Actualizar cada 5 segundos
   setInterval(actualizarConsumoActual, 5000);
   actualizarConsumoActual();
 </script>
+
 {% endblock %}

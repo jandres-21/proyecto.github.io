@@ -380,19 +380,19 @@ def consumo_electrico():
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
 
-@app.route("/consumo_actual")
-def consumo_actual():
+@app.route("/api/consumo_actual", methods=['GET'])
+def obtener_consumo_actual():
     try:
         connection = connectionBD()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute("SELECT voltaje, corriente FROM consumo_actual ORDER BY id DESC LIMIT 1;")
-        data = cursor.fetchone()
-        cursor.close()
-        connection.close()
-        
-        if data:
-            return jsonify(data)
-        else:
-            return jsonify({"voltaje": "N/A", "corriente": "N/A"})
-    except Exception as e:
-        return jsonify({"error": str(e)})
+        cursor.execute("SELECT voltaje, corriente FROM consumo_actual WHERE id = 1;")
+        consumo = cursor.fetchone() or {"voltaje": 0, "corriente": 0}
+        return jsonify(consumo)
+    except mysql.connector.Error as error:
+        print(f"Error al obtener consumo actual: {error}")
+        return jsonify({"voltaje": 0, "corriente": 0})
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
