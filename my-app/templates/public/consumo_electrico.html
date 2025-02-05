@@ -10,7 +10,14 @@
       <hr />
     </h2>
 
+    <!-- Sección para mostrar el consumo actual en tiempo real -->
+    <div class="text-center mb-4">
+      <h4>Consumo Actual</h4>
+      <p>Voltaje: <span id="voltaje_actual">--</span> V | Corriente: <span id="corriente_actual">--</span> A</p>
+    </div>
+
     <div class="table-responsive text-nowrap">
+      <h3 class="text-center mb-3">Registro de Consumo por Hora</h3> <!-- Nombre de la tabla cambiado -->
       <table class="table table-hover" id="tablaDatosElectricos">
         <thead>
           <tr style="background-color: #ddd">
@@ -98,4 +105,20 @@
 
   </section>
 </div>
+
+<script>
+  function actualizarConsumoActual() {
+    fetch("{{ url_for('consumo_actual') }}")
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("voltaje_actual").textContent = data.voltaje || "--";
+        document.getElementById("corriente_actual").textContent = data.corriente || "--";
+      })
+      .catch(error => console.error("Error al obtener el consumo actual:", error));
+  }
+
+  // Actualiza cada 5 segundos
+  setInterval(actualizarConsumoActual, 5000);
+  actualizarConsumoActual();
+</script>
 {% endblock %}

@@ -379,3 +379,20 @@ def consumo_electrico():
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
+
+@app.route("/consumo_actual")
+def consumo_actual():
+    try:
+        connection = connectionBD()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT voltaje, corriente FROM consumo_actual ORDER BY id DESC LIMIT 1;")
+        data = cursor.fetchone()
+        cursor.close()
+        connection.close()
+        
+        if data:
+            return jsonify(data)
+        else:
+            return jsonify({"voltaje": "N/A", "corriente": "N/A"})
+    except Exception as e:
+        return jsonify({"error": str(e)})
