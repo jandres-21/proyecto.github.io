@@ -1,13 +1,14 @@
-# Declarando nombre de la aplicación e inicializando, crear la aplicación Flask
+import subprocess
+import os
 from app import app
 
-# Importando todos mis Routers (Rutas)
-from routers.router_login import *
-from routers.router_home import *
-from routers.router_page_not_found import *
+# Ruta del script que maneja la conexión con Arduino
+arduino_script = os.path.join(os.path.dirname(__file__), "conexion/conexion_arduino.py")
 
+# Ejecutar conexion_arduino.py en segundo plano
+subprocess.Popen(["python", arduino_script])
 
-# Ejecutando el objeto Flask
+# Ejecutar la aplicación Flask en el puerto 8080
 if __name__ == '__main__':
     app.debug = True
-    app.run()
+    app.run(host="0.0.0.0", port=8080)
