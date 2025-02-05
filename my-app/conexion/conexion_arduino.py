@@ -3,6 +3,7 @@ import mysql.connector
 import time
 from datetime import datetime
 import re
+from datetime import datetime, timedelta
 
 # Configuración de umbrales
 umbral_temperatura = 25.0
