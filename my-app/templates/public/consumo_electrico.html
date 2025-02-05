@@ -57,17 +57,11 @@
         {% endif %}
 
         {% set max_pages = 5 %}
-        {% set start_page = page - max_pages // 2 %}
-        {% set end_page = page + max_pages // 2 %}
+        {% set start_page = (page - max_pages // 2) if (page - max_pages // 2) > 1 else 1 %}
+        {% set end_page = (start_page + max_pages - 1) if (start_page + max_pages - 1) < total_paginas else total_paginas %}
 
-        {% if start_page < 1 %}
-          {% set start_page = 1 %}
-          {% set end_page = max_pages %}
-        {% endif %}
-
-        {% if end_page > total_paginas %}
-          {% set end_page = total_paginas %}
-          {% set start_page = total_paginas - max_pages + 1 %}
+        {% if end_page - start_page + 1 < max_pages %}
+          {% set start_page = (end_page - max_pages + 1) if (end_page - max_pages + 1) > 1 else 1 %}
         {% endif %}
 
         {% if start_page > 1 %}
