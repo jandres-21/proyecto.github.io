@@ -9,5 +9,5 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["python", "my-app/run.py"]
+CMD ["python", "/python-docker/my-app/run.py"]
 
