@@ -108,11 +108,8 @@ def guardar_datos_gas(rango, umbral_gas):
 
 # Función para guardar datos de voltaje y corriente
 
-def guardar_datos_electricos(voltaje, corriente):
+def guardar_datos_electricos(voltaje, corriente, cursor, connection):
     try:
-        connection = connectionBD()
-        cursor = connection.cursor()
-
         # Obtener la fecha y hora actuales
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
         hora_actual = datetime.now().strftime('%H:%M:%S')
@@ -149,13 +146,6 @@ def guardar_datos_electricos(voltaje, corriente):
 
     except mysql.connector.Error as error:
         print(f"❌ Error al guardar datos eléctricos: {error}")
-
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
 
 # Configuración de conexiones
 db_connection = connectionBD()
@@ -247,13 +237,13 @@ try:
                         gas_superado = False  # Reinicia la bandera si vuelve a valores normales
 
                     # Guardar los datos de voltaje y corriente
-                    guardar_datos_electricos(voltaje, corriente)
+                    guardar_datos_electricos(voltaje, corriente, cursor, db_connection)
 
                 except ValueError as e:
                     print(f"Error al convertir valores: {e}")
             else:
                 print("Formato de datos no válido.")
-        time.sleep(1)
+                time.sleep(1)
 except KeyboardInterrupt:
     print("\nFinalizando programa.")
 finally:
