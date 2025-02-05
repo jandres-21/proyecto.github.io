@@ -151,33 +151,44 @@ def lista_areasBD():
 # Eliminar usuario
 import logging
 
+from flask import session  # Asegúrate de tener importado session desde flask
+
+from flask import session, redirect, url_for, flash
+
+from flask import session, flash
+
 def eliminarUsuario(id_usuario):
     try:
         with connectionBD() as conexion_MySQLdb:
             with conexion_MySQLdb.cursor(dictionary=True) as cursor:
                 
-                # Verificar si existen registros en rfid_tarjetas relacionados con el usuario (usando id_usuario)
+                # Verificar si existen registros en rfid_tarjetas relacionados con el usuario
                 cursor.execute("SELECT COUNT(*) FROM rfid_tarjetas WHERE cedula = %s", (id_usuario,))
                 registros_rfid = cursor.fetchone()
                 registros_rfid = registros_rfid['COUNT(*)'] if registros_rfid else 0
                 
                 if registros_rfid > 0:
-                    # Actualizar la referencia a NULL en la tabla rfid_tarjetas (cedula de usuario a NULL)
                     cursor.execute("UPDATE rfid_tarjetas SET cedula = NULL WHERE cedula = %s", (id_usuario,))
                     logging.info(f"{registros_rfid} registros en rfid_tarjetas actualizados (cedula a NULL).")
                 
-                # Eliminar el usuario de la tabla usuarios (usando id_usuario)
+                # Eliminar el usuario de la tabla usuarios
                 querySQL = "DELETE FROM usuarios WHERE id_usuario = %s"
                 cursor.execute(querySQL, (id_usuario,))
                 conexion_MySQLdb.commit()
                 
-                resultado_eliminar = cursor.rowcount  # El número de filas afectadas por la eliminación
+                resultado_eliminar = cursor.rowcount  # Número de filas afectadas
                 logging.info(f"{resultado_eliminar} usuario(s) eliminado(s).")
-                return resultado_eliminar
+                
+                if resultado_eliminar > 0:
+                    return True  # Indicar que el usuario fue eliminado correctamente
+                else:
+                    return False  # Indicar que no se eliminó nada (por algún motivo)
 
     except Exception as e:
         logging.error(f"Error en eliminarUsuario: {e}")
-        return []
+        return False  # Indicar que hubo un error
+
+
 
     
 def dataReportes():

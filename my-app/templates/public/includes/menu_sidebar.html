@@ -20,8 +20,8 @@
         <div data-i18n="Tables">Perfil</div>
       </a>
       <ul class="menu-sub">
-        <li class="menu-item {% if request.path == '/mi-perfil/{{dataLogin.id}}'%} active {% endif %}">
-          <a href="/mi-perfil/{{dataLogin.id}}" class="menu-link">
+        <li class="menu-item {% if request.path == url_for('perfil', id=dataLogin.id) %} active {% endif %}">
+          <a href="{{ url_for('perfil', id=dataLogin.id) }}" class="menu-link">
             <div data-i18n="Tables">Mi Perfil</div>
           </a>
         </li>
@@ -66,11 +66,11 @@
             <div data-i18n="Tables">Sensor de Humo</div>
           </a>
         </li>
-        <!-- Nuevo apartado: Comsumo Electrico -->
-        <li class="menu-item {% if request.path == '/consumo-electrico' %} active {% endif %}">
-          <a href="/consumo-electrico" class="menu-link">
+        <!-- Corregido: Consumo Eléctrico -->
+        <li class="menu-item {% if request.path == url_for('consumo_electrico') %} active {% endif %}">
+          <a href="{{ url_for('consumo_electrico') }}" class="menu-link">
             <i class="menu-icon bi bi-lightning-charge"></i> <!-- Icono de corriente -->
-            <div data-i18n="Tables">Comsumo Electrico</div>
+            <div data-i18n="Tables">Consumo Eléctrico</div>
           </a>
         </li>
       </ul>

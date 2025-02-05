@@ -174,11 +174,20 @@ def borrarUsuario(id):
         resp = eliminarUsuario(id)
         
         if resp:
-            flash('El Usuario fue eliminado correctamente', 'success')
+            # Verificar si el usuario eliminado es el que está en sesión
+            if str(session.get('id')) == str(id):
+                flash('Tu cuenta ha sido eliminada. Se cerrará la sesión.', 'warning')
+                return redirect(url_for('cerraSesion'))  # Redirigir a la ruta que cierra sesión
+            else:
+                flash('El Usuario fue eliminado correctamente', 'success')
         else:
             flash('Error al eliminar el usuario', 'error')
         
-        return redirect(url_for('usuarios'))
+        return redirect(url_for('usuarios'))  # Redirigir a la lista de usuarios
+
+
+
+
 
 def obtenerDatosRFID():
     try:
@@ -324,7 +333,49 @@ def obtener_targeta():
     
 
 
-@app.route("/consumo-electrico", methods=['GET'])
+def obtenerDatosElectricos(page=1, per_page=15):
+    try:
+        connection = connectionBD()
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+            offset = (page - 1) * per_page
+            cursor.execute(f"SELECT * FROM datos_electricos ORDER BY fecha DESC, hora DESC LIMIT {per_page} OFFSET {offset};")
+            datos = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            return datos
+    except mysql.connector.Error as error:
+        print(f"Error al obtener los datos eléctricos: {error}")
+        return []
+
+# Ruta para mostrar los datos eléctricos en una página web
+# Ruta para mostrar los datos eléctricos en una página web
+@app.route("/consumo_electrico", methods=['GET'])
 def consumo_electrico():
-    dataLogin = session.get("dataLogin")  # Obtén la variable de sesión o base de datos
-    return render_template('public/consumo_electrico.html', dataLogin=dataLogin, datos_consumo_electrico=[])
+    if 'conectado' in session:
+        page = request.args.get('page', 1, type=int)
+        datos = obtenerDatosElectricos(page=page)
+
+        # Obtener total de registros para paginación
+        connection = connectionBD()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) AS total FROM datos_electricos;")
+        total_registros = cursor.fetchone()['total']
+        cursor.close()
+        connection.close()
+
+        per_page = 15
+        total_paginas = (total_registros // per_page) + (1 if total_registros % per_page > 0 else 0)
+
+        # Obtener datos de la sesión del usuario
+        dataLogin = dataLoginSesion()  # Llamamos a la función correcta
+
+        return render_template('public/consumo_electrico.html',
+                               datos_electricos=datos,
+                               total_paginas=total_paginas,
+                               page=page,
+                               dataLogin=dataLogin)  # Pasamos dataLogin a la plantilla
+    
+    else:
+        flash('Primero debes iniciar sesión.', 'error')
+        return redirect(url_for('inicio'))

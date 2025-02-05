@@ -46,30 +46,31 @@ def cpanelRecoveryPassUser():
         return render_template(f'{PATH_URL_LOGIN}/auth_forgot_password.html')
 
 
+from flask import request, redirect, url_for, flash
+
 # Crear cuenta de usuario
 @app.route('/saved-register', methods=['POST'])
 def cpanelRegisterUserBD():
     if request.method == 'POST' and 'cedula' in request.form and 'pass_user' in request.form:
-        cedula = request.form['cedula']
-        name = request.form['name']
-        surname = request.form['surname']
-        id_area = request.form['selectArea']
-        id_rol = request.form['selectRol']
+        cedula    = request.form['cedula']
+        name      = request.form['name']
+        surname   = request.form['surname']
+        id_area   = request.form['selectArea']
+        id_rol    = request.form['selectRol']
         pass_user = request.form['pass_user']
-        tarjeta = request.form['tarjeta']
-        estado = request.form['estado']
-        genero = request.form['genero']
+        tarjeta   = request.form['tarjeta']
+        estado    = request.form['estado']
+        genero    = request.form['genero']
 
-        resultData = recibeInsertRegisterUser(
-            cedula, name, surname, id_area,id_rol,pass_user, tarjeta ,estado, genero)
-        if (resultData != 0):
-            flash('la cuenta fue creada correctamente.', 'success')
-            return redirect(url_for('inicio'))
-        else:
-            return redirect(url_for('inicio'))
-    else:
-        flash('el método HTTP es incorrecto', 'error')
-        return redirect(url_for('inicio'))
+        resultData = recibeInsertRegisterUser(cedula, name, surname, id_area, id_rol, pass_user, tarjeta, estado, genero)
+        
+        if resultData != 0:
+            flash('La cuenta fue creada correctamente.', 'success')
+    # Redirige a la página anterior o, si no está disponible, a una ruta por defecto.
+    return redirect(url_for('usuarios')) 
+
+
+
 
 
 # Actualizar datos de mi perfil
@@ -156,3 +157,5 @@ def cerraSesion():
         else:
             flash('recuerde debe iniciar sesión.', 'error')
             return render_template(f'{PATH_URL_LOGIN}/base_login.html')
+        
+        
