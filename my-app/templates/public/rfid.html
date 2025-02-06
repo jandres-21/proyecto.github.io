@@ -7,10 +7,13 @@
       <hr />
     </h2>
 
+    <!-- Contenedor de notificación fija (se mostrará cuando llegue un nuevo registro) -->
+    <div id="rfid_notification" class="text-center mb-3" style="display: none; padding: 10px; border-radius: 4px; font-weight: bold;"></div>
+
     <!-- Botón para generar Excel (solo visible para rol 1) -->
     {% if dataLogin.rol == 1 %}
     <div class="text-center mb-4">
-      <button id="btnExportarExcel" class="btn btn-success">Generar Excel</button>
+      <button id="btnExportarExcel" class="btn" style="background-color: #1e88e5; border-color: #1e88e5; color: white;">Generar Excel</button>
     </div>
     {% endif %}
 
@@ -64,6 +67,8 @@
 {% endblock %}
 
 {% block customJS %}
+<!-- Asegúrate de tener cargado socket.io, XLSX y FontAwesome (para el ícono) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
@@ -85,10 +90,7 @@
       });
     });
 
-    // Recarga los datos cada minuto
-    setInterval(function() {
-      location.reload();
-    }, 60000);
+    // Eliminamos el recargado automático (setInterval) para usar actualizaciones en tiempo real
 
     // Exportar a Excel (solo para rol 1)
     {% if dataLogin.rol == 1 %}
@@ -106,6 +108,111 @@
       XLSX.writeFile(wb, "registro_rfid.xlsx");
     });
     {% endif %}
+
+    // Conexión con Socket.IO para actualizaciones en tiempo real
+    const socket = io();
+
+    // Cuando se recibe un nuevo registro RFID
+    socket.on('new_rfid_record', function(data) {
+      // Crear la nueva fila para la tabla
+      const nuevaFila = document.createElement('tr');
+      
+      // Crear las celdas con la información
+      const celdaCedula = document.createElement('td');
+      celdaCedula.textContent = data.cedula;
+      nuevaFila.appendChild(celdaCedula);
+
+      const celdaNombre = document.createElement('td');
+      celdaNombre.textContent = data.nombre || 'Sin Nombre';
+      nuevaFila.appendChild(celdaNombre);
+
+      const celdaApellido = document.createElement('td');
+      celdaApellido.textContent = data.apellido || 'Sin Apellido';
+      nuevaFila.appendChild(celdaApellido);
+
+      const celdaFecha = document.createElement('td');
+      celdaFecha.textContent = data.fecha;
+      nuevaFila.appendChild(celdaFecha);
+
+      const celdaHora = document.createElement('td');
+      celdaHora.textContent = data.hora;
+      nuevaFila.appendChild(celdaHora);
+
+      const celdaEstado = document.createElement('td');
+      celdaEstado.classList.add('fw-bold', 'text-center');
+      const spanEstado = document.createElement('span');
+      // Establecer el color según el estado
+      if(data.estado === 'Permitido'){
+        spanEstado.style.color = 'green';
+      } else if(data.estado === 'Denegado'){
+        spanEstado.style.color = 'red';
+      } else {
+        spanEstado.style.color = 'gray';
+      }
+      spanEstado.textContent = data.estado;
+      celdaEstado.appendChild(spanEstado);
+      nuevaFila.appendChild(celdaEstado);
+
+      // Si el rol es 1, se incluye la celda de UID
+      {% if dataLogin.rol == 1 %}
+      const celdaUID = document.createElement('td');
+      const divInputGroup = document.createElement('div');
+      divInputGroup.classList.add('input-group');
+      const inputUID = document.createElement('input');
+      inputUID.type = 'password';
+      inputUID.classList.add('form-control', 'uid-tarjeta');
+      inputUID.value = data.uid_tarjeta;
+      inputUID.readOnly = true;
+      inputUID.style.maxWidth = '120px';
+      const btnToggle = document.createElement('button');
+      btnToggle.type = 'button';
+      btnToggle.classList.add('btn', 'btn-outline-secondary', 'toggle-uid');
+      btnToggle.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      // Agregar funcionalidad de toggle al botón
+      btnToggle.addEventListener("click", function () {
+        let input = this.previousElementSibling;
+        let icon = this.querySelector("i");
+        
+        if (input.type === "password") {
+          input.type = "text";
+          icon.classList.remove("fa-eye");
+          icon.classList.add("fa-eye-slash");
+        } else {
+          input.type = "password";
+          icon.classList.remove("fa-eye-slash");
+          icon.classList.add("fa-eye");
+        }
+      });
+      divInputGroup.appendChild(inputUID);
+      divInputGroup.appendChild(btnToggle);
+      celdaUID.appendChild(divInputGroup);
+      nuevaFila.appendChild(celdaUID);
+      {% endif %}
+
+      // Insertar la nueva fila al inicio de la tabla
+      const tablaRFID = document.getElementById('tablaRFID').querySelector('tbody');
+      tablaRFID.insertBefore(nuevaFila, tablaRFID.firstChild);
+
+      // Mostrar notificación en la parte superior
+      const notificacion = document.getElementById('rfid_notification');
+      // Configurar el color de fondo y texto según el estado
+      if(data.estado === 'Denegado'){
+        notificacion.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+        notificacion.style.color = 'red';
+      } else if(data.estado === 'Permitido'){
+        notificacion.style.backgroundColor = 'rgba(30, 136, 229, 0.2)'; // tono suave de #1e88e5
+        notificacion.style.color = '#1e88e5';
+      } else {
+        notificacion.style.backgroundColor = 'gray';
+        notificacion.style.color = 'white';
+      }
+      notificacion.textContent = `Nuevo registro detectado: Estado ${data.estado}`;
+      notificacion.style.display = 'block';
+      // Ocultar la notificación automáticamente después de 5 segundos
+      setTimeout(function(){
+        notificacion.style.display = 'none';
+      }, 5000);
+    });
   });
 </script>
 {% endblock %}

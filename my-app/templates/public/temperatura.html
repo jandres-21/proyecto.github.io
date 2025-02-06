@@ -1,11 +1,12 @@
 {% extends 'public/base_cpanel.html' %}
 {% block body %}
-<!-- Mostrar la última temperatura en tiempo real -->
-<div class="alert alert-info d-flex align-items-center justify-content-between">
+<!-- Bloque fijo para mostrar la temperatura actual y la ventilación -->
+<div class="d-flex align-items-center justify-content-between p-3 mb-3" style="background-color: #d9edf7; border: 1px solid #bce8f1; border-radius: 4px;">
   <h4>Temperatura Actual: <span id="temperatura_actual">{{ temperatura_actual }}</span>°C</h4>
-  <!-- Indicador de ventilación -->
-  <div id="ventilacion_estado" class="px-3 py-2 rounded text-white">
-    Ventilación OFF
+  <!-- Ventilación: ícono de ventilador y mensaje debajo -->
+  <div class="d-flex flex-column align-items-center">
+    <i id="fan_icon" class="fas fa-fan" style="font-size: 2rem; transition: transform 0.5s;"></i>
+    <span id="vent_status_msg">Ventilación OFF</span>
   </div>
 </div>
 
@@ -77,21 +78,28 @@
 {% endblock %}
 
 {% block customJS %}
+<!-- Asegúrate de tener cargado socket.io y FontAwesome (para el ícono) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
 <script>
+  // Función para actualizar el estado del ventilador según la temperatura
   function actualizarEstadoVentilacion(temperatura) {
-    const ventilacionEstado = document.getElementById('ventilacion_estado');
+    const fanIcon = document.getElementById('fan_icon');
+    const ventStatusMsg = document.getElementById('vent_status_msg');
 
     if (temperatura > 25) {
-      ventilacionEstado.textContent = 'Ventilación ON';
-      ventilacionEstado.style.backgroundColor = 'green';
+      ventStatusMsg.textContent = 'Ventilación ON';
+      fanIcon.style.color = 'green';
+      // Agrega la clase que hace girar el ícono
+      fanIcon.classList.add('fa-spin');
     } else {
-      ventilacionEstado.textContent = 'Ventilación OFF';
-      ventilacionEstado.style.backgroundColor = 'red';
+      ventStatusMsg.textContent = 'Ventilación OFF';
+      fanIcon.style.color = 'red';
+      // Remueve la clase para que el ícono deje de girar
+      fanIcon.classList.remove('fa-spin');
     }
   }
 
-  // Establecer el estado inicial según la temperatura actual al cargar la página
+  // Establece el estado inicial al cargar la página
   document.addEventListener("DOMContentLoaded", function() {
     const tempInicial = parseFloat(document.getElementById('temperatura_actual').textContent);
     actualizarEstadoVentilacion(tempInicial);
@@ -100,15 +108,13 @@
   // Conexión con el servidor WebSocket
   const socket = io();
 
-  // Actualizar temperatura en tiempo real
+  // Actualizar temperatura actual en tiempo real
   socket.on('temperature_update', function(data) {
-    const temperaturaActual = parseFloat(data.temperature); // Convertir a número
-    console.log('Temperatura recibida:', temperaturaActual); // Depuración en consola
-
-    // Actualizar el texto de la temperatura actual
-    document.getElementById('temperatura_actual').textContent = temperaturaActual.toFixed(2); // Mostrar con 2 decimales
-
-    // Actualizar el estado de ventilación correctamente
+    const temperaturaActual = parseFloat(data.temperature);
+    console.log('Temperatura recibida:', temperaturaActual);
+    // Actualizar el elemento de la temperatura actual
+    document.getElementById('temperatura_actual').textContent = temperaturaActual.toFixed(2);
+    // Actualizar el estado del ventilador según la temperatura recibida
     actualizarEstadoVentilacion(temperaturaActual);
   });
 
@@ -118,16 +124,16 @@
     const nuevaFila = document.createElement('tr');
 
     const nuevaFecha = document.createElement('td');
-    nuevaFecha.textContent = data.fecha; // Fecha del nuevo registro
+    nuevaFecha.textContent = data.fecha;
 
     const nuevaTemperatura = document.createElement('td');
-    nuevaTemperatura.textContent = data.temperatura + '°C'; // Temperatura del nuevo registro
+    nuevaTemperatura.textContent = data.temperatura + '°C';
 
     nuevaFila.appendChild(nuevaFecha);
     nuevaFila.appendChild(nuevaTemperatura);
 
-    tabla.insertBefore(nuevaFila, tabla.firstChild); // Agregar la nueva fila al principio de la tabla
+    // Insertar la nueva fila al principio de la tabla
+    tabla.insertBefore(nuevaFila, tabla.firstChild);
   });
-
 </script>
 {% endblock %}

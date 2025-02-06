@@ -10,9 +10,10 @@
                     <hr />
                 </h2>
 
-                <p class="btn btn-success" style="margin-left: 10px;">
-                    <a href="./register-user">
-                        <span style="color: white;">Nuevo Usuario</span>
+                <!-- Botón Nuevo Usuario con color celeste #1e88e5 -->
+                <p class="btn" style="margin-left: 10px; background-color: #1e88e5 !important; border-color: #1e88e5 !important;">
+                    <a href="./register-user" style="color: white; text-decoration: none;">
+                        Nuevo Usuario
                     </a>
                 </p>
 
@@ -26,7 +27,7 @@
                                 <th>Rol</th>
                                 <th>Tarjeta</th>
                                 <th>Estado</th>
-                                <th>Genero</th>
+                                <th>Género</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -55,17 +56,19 @@
                                         <span class="bi bi-eye toggle-tarjeta" data-id="{{ usuario.id_usuario }}" style="cursor: pointer; margin-left: 5px;"></span>
                                     </div>
                                 </td>
-                                <td>{{ usuario.estado }} </td>
-                                <td>{{ usuario.genero }} </td>
+                                <td>{{ usuario.estado }}</td>
+                                <td>{{ usuario.genero }}</td>
                                 <td>
-                                    <a href="/mi-perfil/{{ usuario.id_usuario | default('0') }}" class="btn btn-success btn-sm" tooltip="Actualizar Registro">
+                                    <!-- Botón Actualizar con color celeste #1e88e5 -->
+                                    <a href="/mi-perfil/{{ usuario.id_usuario | default('0') }}" class="btn btn-sm" style="background-color: #1e88e5 !important; border-color: #1e88e5 !important; color: white;">
                                         <i class="bi bi-arrow-clockwise"></i>
                                         Actualizar
                                     </a>
 
                                     {% if usuario.nombre_usuario != 'Admin' or usuario.apellido_usuario != 'Admin' %}
                                     <form action="/borrar-usuario/{{ usuario.id_usuario }}" method="POST" style="display:inline;" id="form_eliminar_{{ usuario.id_usuario }}">
-                                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="tooltip" title="Eliminar a {{ usuario.nombre_usuario }}" onclick="confirmarEliminar('{{ usuario.id_usuario }}')">
+                                        <!-- Botón Eliminar con rojo elegante -->
+                                        <button type="button" class="btn btn-sm" style="background-color: #cc0000 !important; border-color: #cc0000 !important; color: white;" data-bs-toggle="tooltip" title="Eliminar a {{ usuario.nombre_usuario }}" onclick="confirmarEliminar('{{ usuario.id_usuario }}')">
                                             <i class="bi bi-trash3"></i> Eliminar
                                         </button>
                                     </form>
