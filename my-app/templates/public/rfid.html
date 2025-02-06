@@ -118,7 +118,6 @@
       paginationContainer.appendChild(prevBtn);
 
       // Lógica para mostrar máximo 5 botones de página (incluyendo la primera y última)
-      // Se muestra siempre la primera y la última; se calcula un rango para el medio y se usan "..." si hay salto.
       let start = currentPage - 1;
       let end = currentPage + 1;
       if(start < 2) {
@@ -257,11 +256,13 @@
       const celdaEstado = document.createElement('td');
       celdaEstado.classList.add('fw-bold', 'text-center');
       const spanEstado = document.createElement('span');
-      // Establecer el color según el estado
+      // Configurar el color según el estado:
+      // Si el estado es "permitido", la notificación debe ser ROJA.
+      // Si es "denegado", la notificación será CELeste.
       if(data.estado === 'permitido'){
-        spanEstado.style.color = 'green';
-      } else if(data.estado === 'denegado'){
         spanEstado.style.color = 'red';
+      } else if(data.estado === 'denegado'){
+        spanEstado.style.color = '#1e88e5';
       } else {
         spanEstado.style.color = 'gray';
       }
@@ -284,11 +285,9 @@
       btnToggle.type = 'button';
       btnToggle.classList.add('btn', 'btn-outline-secondary', 'toggle-uid');
       btnToggle.innerHTML = '<i class="fa-solid fa-eye"></i>';
-      // Agregar funcionalidad de toggle al botón
       btnToggle.addEventListener("click", function () {
         let input = this.previousElementSibling;
         let icon = this.querySelector("i");
-        
         if (input.type === "password") {
           input.type = "text";
           icon.classList.remove("fa-eye");
@@ -305,7 +304,7 @@
       nuevaFila.appendChild(celdaUID);
       {% endif %}
 
-      // Insertar la nueva fila al inicio de la tabla
+      // Insertar la nueva fila AL INICIO del tbody para que los nuevos registros aparezcan primero
       const tbody = document.getElementById('tablaRFID').querySelector('tbody');
       tbody.insertBefore(nuevaFila, tbody.firstChild);
 
@@ -313,20 +312,19 @@
       updateTablePagination();
       renderPaginationControls();
 
-      // Mostrar notificación en la parte superior
+      // Mostrar notificación en la parte superior con el mensaje "Nuevo intento de acceso detectado"
       const notificacion = document.getElementById('rfid_notification');
-      // Configurar el color de fondo y texto según el estado
-      if(data.estado === 'denegado'){
-        notificacion.style.backgroundColor = 'rgba(255, 0, 0, 0.2)';
+      if(data.estado === 'permitido'){
+        notificacion.style.backgroundColor = 'rgba(255, 0, 0, 0.2)'; // fondo rojo
         notificacion.style.color = 'red';
-      } else if(data.estado === 'permitido'){
-        notificacion.style.backgroundColor = 'rgba(30, 136, 229, 0.2)'; // tono suave de #1e88e5
+      } else if(data.estado === 'denegado'){
+        notificacion.style.backgroundColor = 'rgba(30, 136, 229, 0.2)'; // fondo celeste
         notificacion.style.color = '#1e88e5';
       } else {
         notificacion.style.backgroundColor = 'gray';
         notificacion.style.color = 'white';
       }
-      notificacion.textContent = `Nuevo registro detectado: Estado ${data.estado}`;
+      notificacion.textContent = `Nuevo intento de acceso detectado: Estado ${data.estado}`;
       notificacion.style.display = 'block';
       // Ocultar la notificación automáticamente después de 5 segundos
       setTimeout(function(){

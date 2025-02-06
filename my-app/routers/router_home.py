@@ -209,7 +209,7 @@ def obtenerDatosRFID(pagina, limite=20):
                     usuarios.apellido_usuario AS apellido
                 FROM rfid_tarjetas
                 LEFT JOIN usuarios ON rfid_tarjetas.cedula = usuarios.cedula
-                ORDER BY rfid_tarjetas.fecha DESC
+                ORDER BY rfid_tarjetas.fecha DESC, rfid_tarjetas.hora DESC
                 LIMIT %s OFFSET %s;
             """
             cursor.execute(query, (limite, offset))
