@@ -1,20 +1,22 @@
-from controllers.funciones_login import *
+# -*- coding: utf-8 -*-
+from controllers.funciones_login import *  # Asegúrate de que dataLoginSesion() y otras funciones estén definidas allí
 from app import app
-from flask import render_template, request, flash, redirect, url_for, session
+from flask import render_template, request, flash, redirect, url_for, session, jsonify
 import mysql.connector
-from flask_socketio import SocketIO
 from mysql.connector import Error
-from controllers.funciones_home import connectionBD
 import time
-import threading
-from controllers.funciones_home import eliminarUsuario
-from flask import request, jsonify
+import threading  # Solo se importa si se usan otras tareas; en este caso, no lo usaremos para monitorear el humo
 from datetime import datetime
+from flask_socketio import SocketIO, emit
+from controllers.funciones_home import connectionBD, eliminarUsuario
 
-
+# Inicialización de Socket.IO (con CORS permitido)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Función para obtener la temperatura actual
+###########################
+# Funciones y rutas para TEMPERATURA
+###########################
+
 def obtenerTemperaturaActual():
     try:
         connection = connectionBD()
@@ -29,7 +31,6 @@ def obtenerTemperaturaActual():
         print(f"Error al obtener la temperatura actual: {error}")
         return None
 
-# Función para obtener datos de temperatura con paginación
 def obtenerDatosTemperatura(page=1, per_page=15):
     try:
         connection = connectionBD()
@@ -45,7 +46,6 @@ def obtenerDatosTemperatura(page=1, per_page=15):
         print(f"Error al obtener los datos de temperatura: {error}")
         return []
 
-# Ruta para mostrar los datos de temperatura
 @app.route("/temperatura", methods=['GET'])
 def temperatura():
     if 'conectado' in session:
@@ -74,32 +74,31 @@ def temperatura():
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
 
-# Función para monitorear la temperatura y enviar actualizaciones en tiempo real
 def monitorear_temperatura():
     temperatura_anterior = None
     while True:
         nueva_temperatura = obtenerTemperaturaActual()
         if nueva_temperatura is not None and nueva_temperatura != temperatura_anterior:
             temperatura_anterior = nueva_temperatura
-            # Emitir eventos de actualización de temperatura y nuevo registro
+            # Emitir eventos para la temperatura
             socketio.emit('temperature_update', {'temperature': nueva_temperatura})
             socketio.emit('new_temperature_record', {
                 'fecha': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'temperatura': nueva_temperatura
             })
-        time.sleep(3)  # Revisa cada 3 segundos
+        time.sleep(3)  # Revisar cada 3 segundos
 
-# Iniciar el monitoreo en un hilo separado
+# Iniciar el monitoreo de temperatura en un hilo separado (puedes mantener esto si lo deseas)
 threading.Thread(target=monitorear_temperatura, daemon=True).start()
+@app.route("/temperatura_data", methods=["GET"])
+def temperatura_data():
+    datos = obtenerDatosTemperatura(page=1)  # O la consulta que desees
+    return jsonify(datos)
 
-# Ruta para listar áreas
-@app.route('/lista-de-areas', methods=['GET'])
-def lista_areas():
-    if 'conectado' in session:
-        return render_template('public/usuarios/lista_areas.html', areas=lista_areasBD(), dataLogin=dataLoginSesion())
-    else:
-        flash('Primero debes iniciar sesión.', 'error')
-        return redirect(url_for('inicioCpanel'))
+
+###########################
+# Rutas y funciones para USUARIOS, ÁREAS, RFID, etc.
+###########################
 
 def lista_rolesBD():
     try:
@@ -118,24 +117,21 @@ def lista_areasBD():
         with connectionBD() as conexion_MySQLdb:
             with conexion_MySQLdb.cursor(dictionary=True) as cursor:
                 querySQL = "SELECT id_area, nombre_area FROM area"
-                cursor.execute(querySQL,)
+                cursor.execute(querySQL)
                 areasBD = cursor.fetchall()
         return areasBD
     except Exception as e:
         print(f"Error en lista_areas : {e}")
         return []
- 
 
-
-# Función corregida de lista de usuarios con verificación de base de datos
 def lista_usuariosBD():
     try:
         connection = connectionBD()
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT * FROM usuarios")  # Asegúrate de que la consulta sea correcta
+            cursor.execute("SELECT * FROM usuarios")
             usuarios = cursor.fetchall()
-            print("Usuarios:", usuarios)  # Verifica los datos obtenidos
+            print("Usuarios:", usuarios)
             cursor.close()
             connection.close()
             return usuarios
@@ -146,7 +142,6 @@ def lista_usuariosBD():
         print(f"Error al obtener usuarios: {error}")
         return []
 
-# Ruta para listar usuarios
 @app.route("/lista-de-usuarios", methods=['GET'])
 def usuarios():
     if 'conectado' in session:
@@ -154,9 +149,9 @@ def usuarios():
         areas_data = lista_areasBD()
         roles_data = lista_rolesBD()
 
-        print("Usuarios:", usuarios_data)  # Verifica los datos de usuarios
-        print("Áreas:", areas_data)  # Verifica los datos de áreas
-        print("Roles:", roles_data)  # Verifica los datos de roles
+        print("Usuarios:", usuarios_data)
+        print("Áreas:", areas_data)
+        print("Roles:", roles_data)
 
         return render_template('public/usuarios/lista_usuarios.html',
                                resp_usuariosBD=usuarios_data,
@@ -166,37 +161,37 @@ def usuarios():
     else:
         return redirect(url_for('inicioCpanel'))
 
-# Ruta para eliminar un usuario
 @app.route('/borrar-usuario/<string:id>', methods=['GET', 'POST'])
 def borrarUsuario(id):
     if request.method == 'POST':
-        # Llamar a la función para eliminar el usuario
         resp = eliminarUsuario(id)
         
         if resp:
-            # Verificar si el usuario eliminado es el que está en sesión
             if str(session.get('id')) == str(id):
                 flash('Tu cuenta ha sido eliminada. Se cerrará la sesión.', 'warning')
-                return redirect(url_for('cerraSesion'))  # Redirigir a la ruta que cierra sesión
+                return redirect(url_for('cerraSesion'))
             else:
                 flash('El Usuario fue eliminado correctamente', 'success')
         else:
             flash('Error al eliminar el usuario', 'error')
         
-        return redirect(url_for('usuarios'))  # Redirigir a la lista de usuarios
+        return redirect(url_for('usuarios'))
 
+@app.route('/lista-de-areas', methods=['GET'])
+def lista_areas():
+    if 'conectado' in session:
+        return render_template('public/usuarios/lista_areas.html', areas=lista_areasBD(), dataLogin=dataLoginSesion())
+    else:
+        flash('Primero debes iniciar sesión.', 'error')
+        return redirect(url_for('inicioCpanel'))
 
-# Función para obtener los datos RFID con paginación
+# Función para obtener datos RFID con paginación
 def obtenerDatosRFID(pagina, limite=20):
     try:
         connection = connectionBD()
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)
-
-            # Calcular el OFFSET para la paginación
             offset = (pagina - 1) * limite
-
-            # Consulta SQL con paginación
             query = """
                 SELECT 
                     rfid_tarjetas.id, 
@@ -214,31 +209,23 @@ def obtenerDatosRFID(pagina, limite=20):
             """
             cursor.execute(query, (limite, offset))
             datos = cursor.fetchall()
-
-            # Obtener el total de registros para la paginación
             cursor.execute("SELECT COUNT(*) AS total FROM rfid_tarjetas")
             total_registros = cursor.fetchone()["total"]
             total_paginas = (total_registros // limite) + (1 if total_registros % limite > 0 else 0)
-
             return datos, total_paginas
-    
     except mysql.connector.Error as error:
         print(f"Error al obtener los datos de RFID: {error}")
         return [], 0
-    
     finally:
         if connection.is_connected():
             cursor.close()
             connection.close()
 
-# Ruta con paginación
 @app.route("/rfid", methods=['GET'])
 def rfid():
     if 'conectado' in session:
-        # Obtener el número de página desde la URL
         pagina = request.args.get('pagina', 1, type=int)
         datos_rfid, total_paginas = obtenerDatosRFID(pagina)
-
         return render_template('public/rfid.html', 
                                datos_rfid=datos_rfid, 
                                total_paginas=total_paginas, 
@@ -248,80 +235,108 @@ def rfid():
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
 
+###########################
+# Funciones y rutas para SENSOR DE HUMO
+###########################
 
-
-def obtenerDatosSensoresHumo(page=1, per_page=20):
+def obtenerNivelHumoActual():
     try:
         connection = connectionBD()
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)
-
-            # Obtener total de registros
-            cursor.execute("SELECT COUNT(*) AS total FROM sensores_humo;")
-            total_registros = cursor.fetchone()['total']
-
-            # Calcular el offset para la paginación
-            offset = (page - 1) * per_page
-
-            # Consulta SQL con paginación y ordenada por fecha y hora descendente
-            query = "SELECT * FROM sensores_humo ORDER BY fecha DESC, hora DESC LIMIT %s OFFSET %s;"
-            cursor.execute(query, (per_page, offset))
-
-            # Obtener los resultados
-            datos = cursor.fetchall()
-
-            # Obtener el último registro
-            ultimo_registro = datos[0] if datos else None
+            cursor.execute("SELECT rango FROM nivel_humo WHERE id = 1;")
+            resultado = cursor.fetchone()
             cursor.close()
             connection.close()
-
-            # Comprobar si el último registro tiene un valor mayor a 100
-            supera_100 = False
-            if ultimo_registro and float(ultimo_registro['rango']) > 100:
-                supera_100 = True
-
-            return datos, supera_100, total_registros
-    
+            print("Resultado de obtenerNivelHumoActual:", resultado)
+            return float(resultado['rango']) if resultado and resultado['rango'] is not None else 0
     except mysql.connector.Error as error:
-        print(f"Error al obtener los datos de sensores de humo: {error}")
-        return [], False, 0
+        print(f"Error al obtener el nivel de humo: {error}")
+        return 0
 
-
+def obtenerDatosHumo(page=1, per_page=20):
+    try:
+        connection = connectionBD()
+        if connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+            offset = (page - 1) * per_page
+            query = "SELECT * FROM sensores_humo ORDER BY fecha DESC, hora DESC LIMIT %s OFFSET %s;"
+            cursor.execute(query, (per_page, offset))
+            datos = cursor.fetchall()
+            cursor.close()
+            connection.close()
+            return datos
+    except mysql.connector.Error as error:
+        print(f"Error al obtener los datos de humo: {error}")
+        return []
 
 @app.route("/sensores-humo", methods=['GET'])
 def sensores_humo():
     if 'conectado' in session:
-        # Obtener la página actual desde la URL
+        nivel_actual = obtenerNivelHumoActual()
+        print("Nivel actual obtenido:", nivel_actual)
         page = request.args.get('page', 1, type=int)
+        datos_humo = obtenerDatosHumo(page=page)
+        connection = connectionBD()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT COUNT(*) AS total FROM sensores_humo;")
+        total_registros = cursor.fetchone()['total']
+        cursor.close()
+        connection.close()
         per_page = 20
-
-        # Obtener datos paginados
-        datos_sensores_humo, supera_100, total_registros = obtenerDatosSensoresHumo(page, per_page)
-
-        # Calcular total de páginas correctamente
         total_paginas = (total_registros // per_page) + (1 if total_registros % per_page > 0 else 0)
-
-        return render_template('public/sensor_humo.html', 
-                               datos_sensores_humo=datos_sensores_humo, 
-                               supera_100=supera_100,
-                               total_paginas=total_paginas, 
-                               pagina=page, 
+        return render_template('public/sensor_humo.html',
+                               datos_sensores_humo=datos_humo,
+                               total_paginas=total_paginas,
+                               pagina=page,
+                               nivel_actual=nivel_actual,
                                dataLogin=dataLoginSesion())
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
 
+@socketio.on('connect')
+def handle_connect():
+    print("Cliente conectado al sensor de humo")
 
+def monitorear_humo():
+    while True:
+        nuevo_nivel = obtenerNivelHumoActual()
+        print("Nuevo nivel de humo:", nuevo_nivel)
+        socketio.emit('update_nivel_humo', {'nivel': float(nuevo_nivel)})
+        socketio.emit('new_humo_record', {
+            'fecha': time.strftime('%Y-%m-%d'),
+            'hora': time.strftime('%H:%M:%S'),
+            'rango': float(nuevo_nivel)
+        })
+        time.sleep(3)
+
+@app.route("/sensores-humo-data", methods=["GET"])
+def sensores_humo_data():
+    # Puedes usar la función obtenerDatosHumo y, si lo deseas, filtrar el último valor.
+    datos = obtenerDatosHumo(page=1, per_page=20)
+    # Si deseas excluir el registro más reciente (por ejemplo, el primero en la lista),
+    # puedes hacer: datos = datos[1:]
+    return jsonify(datos)
+
+
+# Iniciar el monitoreo del sensor de humo en segundo plano (solo una de las siguientes líneas)
+socketio.start_background_task(monitorear_humo)
+# threading.Thread(target=monitorear_humo, daemon=True).start()  <-- Esta línea se ha comentado
+
+###########################
+# Rutas y funciones para TARJETAS y CONSUMO ELÉCTRICO
+###########################
 
 def ObtenerTargeta():
     try:
         connection = connectionBD()
         if connection.is_connected():
             cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT codigo FROM Targeta")  # Consulta SQL
+            cursor.execute("SELECT codigo FROM Targeta")
             usuarios = cursor.fetchall()
             if usuarios:
-                ultimo_codigo = usuarios[-1]['codigo']  # Obtenemos el último código
+                ultimo_codigo = usuarios[-1]['codigo']
                 cursor.close()
                 connection.close()
                 return ultimo_codigo
@@ -340,8 +355,6 @@ def obtener_targeta():
         return jsonify({'codigo': ultimo_codigo})
     else:
         return jsonify({'error': 'No se encontró ningún código de tarjeta.'}), 404
-    
-
 
 def obtenerDatosElectricos(page=1, per_page=15):
     try:
@@ -358,34 +371,25 @@ def obtenerDatosElectricos(page=1, per_page=15):
         print(f"Error al obtener los datos eléctricos: {error}")
         return []
 
-# Ruta para mostrar los datos eléctricos en una página web
-# Ruta para mostrar los datos eléctricos en una página web
 @app.route("/consumo_electrico", methods=['GET'])
 def consumo_electrico():
     if 'conectado' in session:
         page = request.args.get('page', 1, type=int)
         datos = obtenerDatosElectricos(page=page)
-
-        # Obtener total de registros para paginación
         connection = connectionBD()
         cursor = connection.cursor(dictionary=True)
         cursor.execute("SELECT COUNT(*) AS total FROM datos_electricos;")
         total_registros = cursor.fetchone()['total']
         cursor.close()
         connection.close()
-
         per_page = 15
         total_paginas = (total_registros // per_page) + (1 if total_registros % per_page > 0 else 0)
-
-        # Obtener datos de la sesión del usuario
-        dataLogin = dataLoginSesion()  # Llamamos a la función correcta
-
+        dataLogin = dataLoginSesion()
         return render_template('public/consumo_electrico.html',
                                datos_electricos=datos,
                                total_paginas=total_paginas,
                                page=page,
-                               dataLogin=dataLogin)  # Pasamos dataLogin a la plantilla
-    
+                               dataLogin=dataLogin)
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
@@ -406,3 +410,10 @@ def obtener_consumo_actual():
             cursor.close()
         if connection:
             connection.close()
+
+###########################
+# Arranque de la aplicación
+###########################
+
+if __name__ == "__main__":
+    socketio.run(app, debug=True)

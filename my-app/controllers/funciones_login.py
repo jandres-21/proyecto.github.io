@@ -11,9 +11,9 @@ import re
 from werkzeug.security import generate_password_hash
 
 
-def recibeInsertRegisterUser(cedula, name, surname, id_area, id_rol, pass_user,tarjeta, estado, genero):
+def recibeInsertRegisterUser(cedula, name, surname, pass_user, tarjeta, id_area, id_rol, estado, genero):
     respuestaValidar = validarDataRegisterLogin(
-        cedula, name, surname, pass_user)
+        cedula, name, surname, pass_user,tarjeta)
 
     if (respuestaValidar):
         nueva_password = generate_password_hash(pass_user, method='scrypt')
@@ -21,10 +21,10 @@ def recibeInsertRegisterUser(cedula, name, surname, id_area, id_rol, pass_user,t
             with connectionBD() as conexion_MySQLdb:
                 with conexion_MySQLdb.cursor(dictionary=True) as mycursor:
                     sql = """
-                    INSERT INTO usuarios(cedula, nombre_usuario, apellido_usuario, id_area, id_rol, password, tarjeta, estado, genero) 
+                    INSERT INTO usuarios(cedula, nombre_usuario, apellido_usuario, password, tarjeta, id_area, id_rol, estado, genero) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s ,%s, %s)
                     """
-                    valores = (cedula, name, surname, id_area, id_rol, nueva_password, tarjeta, estado, genero)
+                    valores = (cedula, name, surname, pass_user, tarjeta, id_area, id_rol, estado, genero)
                     mycursor.execute(sql, valores)
                     conexion_MySQLdb.commit()
                     resultado_insert = mycursor.rowcount
@@ -37,27 +37,37 @@ def recibeInsertRegisterUser(cedula, name, surname, id_area, id_rol, pass_user,t
 
 
 # Validando la data del Registros para el login
-def validarDataRegisterLogin(cedula, name, surname, pass_user):
+def validarDataRegisterLogin(cedula, name, surname, pass_user, tarjeta):
     try:
         with connectionBD() as conexion_MySQLdb:
             with conexion_MySQLdb.cursor(dictionary=True) as cursor:
-                querySQL = "SELECT * FROM usuarios WHERE cedula = %s"
-                cursor.execute(querySQL, (cedula,))
-                userBD = cursor.fetchone()  # Obtener la primera fila de resultados
+                 # Validación de la tarjeta
+                queryTarjeta ="SELECT * FROM usuarios WHERE tarjeta = %s"
+                cursor.execute(queryTarjeta, (tarjeta,))
+                tarjetaBD = cursor.fetchone()
+                if tarjetaBD is not None:
+                    flash('Ya existe una cuenta con esta tarjeta', 'error')
+                    return False
+                # Validación de la cédula
+                queryCedula = "SELECT * FROM usuarios WHERE cedula = %s"
+                cursor.execute(queryCedula, (cedula,))
+                userBD = cursor.fetchone()
 
                 if userBD is not None:
-                    flash('Ya existe una cuenta con este numero de cedula', 'error')
+                    flash('Ya existe una cuenta con este número de cédula', 'error')
                     return False
-                elif not cedula or not name or not pass_user:
-                    flash('por favor llene los campos del formulario.', 'error')
+                # Validar que los campos obligatorios no estén vacíos
+                if not cedula or not name or not pass_user or not tarjeta:
+                    flash('Por favor llene todos los campos del formulario.', 'error')
                     return False
-                else:
-                    # La cuenta no existe y los datos del formulario son válidos, puedo realizar el Insert
-                    return True
-                
+
+                # Todos los datos son válidos y no existen en la base de datos
+                return True
+
     except Exception as e:
-        print(f"Error en validarDataRegisterLogin : {e}")
+        print(f"Error en validarDataRegisterLogin: {e}")
         return []
+
 
 
 def info_perfil_session(id):
