@@ -186,57 +186,64 @@ def borrarUsuario(id):
         return redirect(url_for('usuarios'))  # Redirigir a la lista de usuarios
 
 
-
-
-
-def obtenerDatosRFID():
+# Función para obtener los datos RFID con paginación
+def obtenerDatosRFID(pagina, limite=20):
     try:
-        # Establecer conexión a la base de datos
-        connection = connectionBD()  # Aquí debes tener definida tu función de conexión
-        
+        connection = connectionBD()
         if connection.is_connected():
-            cursor = connection.cursor(dictionary=True)  # Para obtener los resultados como diccionario
-            
-            # Consulta SQL para obtener los registros de tarjetas RFID con datos del usuario
+            cursor = connection.cursor(dictionary=True)
+
+            # Calcular el OFFSET para la paginación
+            offset = (pagina - 1) * limite
+
+            # Consulta SQL con paginación
             query = """
                 SELECT 
-    rfid_tarjetas.id, 
-    rfid_tarjetas.uid_tarjeta, 
-    rfid_tarjetas.estado, 
-    rfid_tarjetas.cedula, 
-    rfid_tarjetas.fecha, 
-    rfid_tarjetas.hora, 
-    usuarios.nombre_usuario AS nombre, 
-    usuarios.apellido_usuario AS apellido
-FROM rfid_tarjetas
-LEFT JOIN usuarios ON rfid_tarjetas.cedula = usuarios.cedula
-ORDER BY rfid_tarjetas.fecha DESC
-LIMIT 10;
-
+                    rfid_tarjetas.id, 
+                    rfid_tarjetas.uid_tarjeta, 
+                    rfid_tarjetas.estado, 
+                    rfid_tarjetas.cedula, 
+                    rfid_tarjetas.fecha, 
+                    rfid_tarjetas.hora, 
+                    usuarios.nombre_usuario AS nombre, 
+                    usuarios.apellido_usuario AS apellido
+                FROM rfid_tarjetas
+                LEFT JOIN usuarios ON rfid_tarjetas.cedula = usuarios.cedula
+                ORDER BY rfid_tarjetas.fecha DESC
+                LIMIT %s OFFSET %s;
             """
-            cursor.execute(query)
-            
-            # Obtener los resultados
+            cursor.execute(query, (limite, offset))
             datos = cursor.fetchall()
-            return datos
+
+            # Obtener el total de registros para la paginación
+            cursor.execute("SELECT COUNT(*) AS total FROM rfid_tarjetas")
+            total_registros = cursor.fetchone()["total"]
+            total_paginas = (total_registros // limite) + (1 if total_registros % limite > 0 else 0)
+
+            return datos, total_paginas
     
     except mysql.connector.Error as error:
         print(f"Error al obtener los datos de RFID: {error}")
-        return []
+        return [], 0
     
     finally:
         if connection.is_connected():
-            cursor.close()  # Cerrar cursor
-            connection.close()  # Cerrar conexión
+            cursor.close()
+            connection.close()
 
-
-
+# Ruta con paginación
 @app.route("/rfid", methods=['GET'])
 def rfid():
     if 'conectado' in session:
-        # Obtener los datos de RFID desde la base de datos
-        datos_rfid = obtenerDatosRFID()  # Esta función debe devolver los datos de las tarjetas RFID
-        return render_template('public/rfid.html', datos_rfid=datos_rfid, dataLogin=dataLoginSesion())
+        # Obtener el número de página desde la URL
+        pagina = request.args.get('pagina', 1, type=int)
+        datos_rfid, total_paginas = obtenerDatosRFID(pagina)
+
+        return render_template('public/rfid.html', 
+                               datos_rfid=datos_rfid, 
+                               total_paginas=total_paginas, 
+                               pagina_actual=pagina, 
+                               dataLogin=dataLoginSesion())
     else:
         flash('Primero debes iniciar sesión.', 'error')
         return redirect(url_for('inicio'))
