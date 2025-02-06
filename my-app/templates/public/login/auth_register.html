@@ -45,8 +45,8 @@
               <div class="mb-3 col-md-6">
                 <label for="tarjeta" class="form-label">Tarjeta</label>
                 <div class="input-group">
-                  <!-- Se cambia el tipo a "password" para ocultar los caracteres por defecto -->
-                  <input type="password" class="form-control" name="tarjeta" id="tarjeta" required readonly value="" />
+                  <!-- Se mantiene el tipo "password" para ocultar los caracteres, pero se elimina readonly -->
+                  <input type="password" class="form-control" name="tarjeta" id="tarjeta" required value="" />
                   <span class="input-group-text cursor-pointer" id="toggleTarjeta">
                     <i class="bx bx-show"></i>
                   </span>

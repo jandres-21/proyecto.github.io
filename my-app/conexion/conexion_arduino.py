@@ -8,6 +8,11 @@ from datetime import datetime, timedelta
 # Configuración de umbrales
 umbral_temperatura = 25.0
 umbral_gas = 500
+acum_voltaje = 0.0       # Suma de los voltajes medidos
+acum_corriente = 0.0     # Suma de las corrientes medidas
+acum_consumo = 0.0       # Suma de la energía en kWh calculada
+count_readings = 0       # Número de mediciones acumuladas
+ultimo_registro_hora = None  # Fecha y hora del inicio del acumulado
 
 # Banderas para evitar múltiples registros
 temp_superado = False
@@ -79,73 +84,100 @@ def guardar_datos_gas(rango, umbral_gas):
     global ultimo_rango_guardado  # Usamos la variable global
 
     try:
-        # Verificar si el rango supera el umbral y si es un múltiplo de 500 superior al último registrado
+        # Actualizar siempre el valor en la tabla `nivel_humo`
+        cursor.execute("""
+            INSERT INTO nivel_humo (id, rango)
+            VALUES (1, %s)
+            ON DUPLICATE KEY UPDATE rango = %s
+        """, (rango, rango))
+        db_connection.commit()
+        print(f"Actualizado en 'nivel_humo': Rango: {rango}")
+
+        # Verificar si el rango supera el umbral y es un múltiplo de 500 superior al último registrado
         if rango > umbral_gas and (rango // 500) * 500 > ultimo_rango_guardado:
             # Obtener la fecha y hora actuales
             fecha_actual = datetime.now().strftime('%Y-%m-%d')  # Solo la fecha (YYYY-MM-DD)
             hora_actual = datetime.now().strftime('%H:%M:%S')  # Solo la hora (HH:MM:SS)
-            
-            # Ejecutar la consulta SQL para insertar los datos
-            cursor.execute(""" 
+
+            # Guardar en la tabla `sensores_humo`
+            cursor.execute("""
                 INSERT INTO sensores_humo (rango, fecha, hora)
                 VALUES (%s, %s, %s)
             """, (rango, fecha_actual, hora_actual))
-            
-            # Confirmar la transacción
             db_connection.commit()
-            
-            # Imprimir mensaje de éxito
-            print(f"Gas guardado: {fecha_actual} {hora_actual}, Rango: {rango}")
+            print(f"Gas guardado en 'sensores_humo': {fecha_actual} {hora_actual}, Rango: {rango}")
 
             # Actualizar el último rango guardado con el múltiplo de 500 más cercano
             ultimo_rango_guardado = (rango // 500) * 500
         else:
-            print(f"El valor de rango ({rango}) no supera el umbral ({umbral_gas}) o ya se ha registrado un rango mayor o igual a ese.")
+            print(f"El valor de rango ({rango}) no cumple las condiciones para guardarse en 'sensores_humo'.")
     
     except mysql.connector.Error as error:
         # Manejo de errores
         print(f"Error al guardar datos de gas: {error}")
 
+
 # Función para guardar datos de voltaje y corriente
 
 def guardar_datos_electricos(voltaje, corriente, cursor, connection):
+    global acum_voltaje, acum_corriente, acum_consumo, count_readings, ultimo_registro_hora
     try:
         # Obtener la fecha y hora actuales
-        fecha_actual = datetime.now().strftime('%Y-%m-%d')
-        hora_actual = datetime.now().strftime('%H:%M:%S')
-
-        # 🔹 Actualizar la tabla "consumo_actual" con los datos en tiempo real (1 solo registro)
+        ahora = datetime.now()
+        fecha_actual = ahora.strftime('%Y-%m-%d')
+        hora_actual = ahora.strftime('%H:%M:%S')
+        
+        # Inicializar el acumulador si es la primera medición
+        if ultimo_registro_hora is None:
+            ultimo_registro_hora = ahora
+        
+        # Actualizar la tabla "consumo_actual" con los datos en tiempo real (1 solo registro)
         cursor.execute("""
             INSERT INTO consumo_actual (id, voltaje, corriente) 
             VALUES (1, %s, %s)
             ON DUPLICATE KEY UPDATE voltaje = %s, corriente = %s;
         """, (voltaje, corriente, voltaje, corriente))
+        
+        # --- Acumular mediciones ---
+        # Actualizar acumuladores con la medición actual
+        acum_voltaje += voltaje
+        acum_corriente += corriente
+        count_readings += 1
+        
+        # Calcular la energía consumida en este intervalo (3 segundos) en kWh
+        # Intervalo en horas: 3 segundos = 3/3600 horas
+        intervalo_horas = 3 / 3600  
+        energia = (voltaje * corriente) / 1000 * intervalo_horas  # (W/1000 = kW) * horas = kWh
+        acum_consumo += energia
+        
+        # --- Verificar si ha pasado 1 hora desde el último registro agregado en "datos_electricos" ---
+        if ahora - ultimo_registro_hora >= timedelta(hours=1):
+            # Calcular promedios
+            promedio_voltaje = acum_voltaje / count_readings
+            promedio_corriente = acum_corriente / count_readings
+            consumo_total_kwh = acum_consumo  # Acumulado en kWh durante la hora
 
-        # 🔹 Verificar si ha pasado una hora desde el último registro en "datos_electricos"
-        cursor.execute("SELECT fecha, hora FROM datos_electricos ORDER BY fecha DESC, hora DESC LIMIT 1;")
-        ultima_medicion = cursor.fetchone()
-
-        if ultima_medicion:
-            ultima_fecha, ultima_hora = ultima_medicion
-            ultima_medicion_dt = datetime.strptime(f"{ultima_fecha} {ultima_hora}", "%Y-%m-%d %H:%M:%S")
-        else:
-            ultima_medicion_dt = None
-
-        ahora = datetime.now()
-
-        if not ultima_medicion_dt or (ahora - ultima_medicion_dt >= timedelta(hours=1)):
-            # Insertar nuevo registro cada hora en "datos_electricos"
+            # Insertar nuevo registro en "datos_electricos" con los datos agregados de la hora
+            # Se asume que la tabla datos_electricos tiene una columna "consumo_kwh"
             cursor.execute("""
-                INSERT INTO datos_electricos (voltaje, corriente, fecha, hora)
-                VALUES (%s, %s, %s, %s);
-            """, (voltaje, corriente, fecha_actual, hora_actual))
-            print(f"✅ Registro horario guardado en datos_electricos: {voltaje} V, {corriente} A - {fecha_actual} {hora_actual}")
+                INSERT INTO datos_electricos (voltaje, corriente, fecha, hora, consumo_kwh)
+                VALUES (%s, %s, %s, %s, %s);
+            """, (promedio_voltaje, promedio_corriente, fecha_actual, hora_actual, consumo_total_kwh))
+            print(f"✅ Registro horario guardado: Promedio Voltaje: {promedio_voltaje:.2f} V, Promedio Corriente: {promedio_corriente:.2f} A, Consumo: {consumo_total_kwh:.3f} kWh - {fecha_actual} {hora_actual}")
+            
+            # Reiniciar acumuladores para la siguiente hora
+            acum_voltaje = 0.0
+            acum_corriente = 0.0
+            acum_consumo = 0.0
+            count_readings = 0
+            ultimo_registro_hora = ahora
 
         # Confirmar la transacción
         connection.commit()
 
     except mysql.connector.Error as error:
         print(f"❌ Error al guardar datos eléctricos: {error}")
+
 
 # Configuración de conexiones
 db_connection = connectionBD()
