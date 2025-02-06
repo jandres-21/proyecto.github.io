@@ -1,8 +1,8 @@
-<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
+<aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme" style="background: #343a40; color: #ffffff;">
   <div class="app-brand demo">
     <a href="{{ url_for('inicio') }}" class="app-brand-link">
       <span class="app-brand-logo demo">
-        <img src="{{ url_for('static', filename ='assets/img/logo.png') }}" alt="Logo" />
+        <img src="{{ url_for('static', filename='assets/img/logo.png') }}" alt="Logo" />
       </span>
     </a>
     <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
@@ -13,15 +13,21 @@
   <div class="menu-inner-shadow"></div>
   <ul class="menu-inner py-5">
 
-    <!-- Grupo Perfil -->
+    <!-- Grupo Perfil con ícono en círculo -->
     <li class="menu-item menu-dropdown">
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon bi bi-person-fill"></i> <!-- Icono de perfil -->
-        <div data-i18n="Tables">Perfil</div>
+        <div class="d-flex align-items-center">
+          <!-- Contenedor circular para el ícono -->
+          <div class="d-flex align-items-center justify-content-center me-2" 
+               style="width: 50px; height: 50px; border: 2px solid #ddd; border-radius: 50%; background-color: #f8f9fa;">
+            <i class="bi bi-person-fill fs-3 text-primary"></i>
+          </div>
+          <span class="fw-bold" data-i18n="Tables">{{ session['name'] }}</span>
+        </div>
       </a>
       <ul class="menu-sub">
-        <li class="menu-item {% if request.path == url_for('perfil', id=dataLogin.id) %} active {% endif %}">
-          <a href="{{ url_for('perfil', id=dataLogin.id) }}" class="menu-link">
+        <li class="menu-item {% if request.path == url_for('perfil', id=session['id']) %} active {% endif %}">
+          <a href="{{ url_for('perfil', id=session['id']) }}" class="menu-link">
             <div data-i18n="Tables">Mi Perfil</div>
           </a>
         </li>
@@ -33,48 +39,60 @@
       </ul>
     </li>
 
-    <!-- Grupo Administración -->
+    <!-- Línea divisoria gris -->
+    <div style="width: 100%; border-top: 2px solid #ccc; margin: 1rem 0;"></div>
+
+    <!-- Grupo Monitoreo (cerrado por defecto) -->
     <li class="menu-item menu-dropdown">
       <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon bi bi-clipboard-data"></i> <!-- Icono de administración -->
-        <div data-i18n="Tables">Administración</div>
+        <i class="menu-icon bi bi-graph-up"></i> <!-- Ícono original de monitoreo -->
+        <div data-i18n="Tables">Monitoreo</div>
       </a>
       <ul class="menu-sub">
-        {% if dataLogin.rol == 1 %}  <!-- Solo para rol 1 -->
-        <li class="menu-item {% if request.path == '/lista-de-usuarios' %} active {% endif %}">
-          <a href="/lista-de-usuarios" class="menu-link">
-            <i class="menu-icon bi bi-person-lines-fill"></i> <!-- Icono de usuarios -->
-            <div data-i18n="Tables">Administrar Usuarios</div>
-          </a>
-        </li>
-        {% endif %}  <!-- Fin de la verificación de roles -->
         <li class="menu-item {% if request.path == '/temperatura' %} active {% endif %}">
           <a href="/temperatura" class="menu-link">
-            <i class="menu-icon bi bi-thermometer-half"></i> <!-- Icono de temperatura -->
+            <i class="menu-icon bi bi-thermometer-half"></i> <!-- Ícono de temperatura -->
             <div data-i18n="Tables">Temperatura</div>
           </a>
         </li>
         <li class="menu-item {% if request.path == '/rfid' %} active {% endif %}">
           <a href="/rfid" class="menu-link">
-            <i class="menu-icon bi bi-shield-lock"></i> <!-- Icono de acceso -->
+            <i class="menu-icon bi bi-shield-lock"></i> <!-- Ícono de acceso -->
             <div data-i18n="Tables">Control de Acceso</div>
           </a>
         </li>
         <li class="menu-item {% if request.path == '/sensores-humo' %} active {% endif %}">
           <a href="/sensores-humo" class="menu-link">
-            <i class="menu-icon bi bi-cloud-fog2"></i> <!-- Icono de humo -->
+            <i class="menu-icon bi bi-fire"></i> <!-- Nuevo ícono para humo -->
             <div data-i18n="Tables">Sensor de Humo</div>
           </a>
         </li>
-        <!-- Corregido: Consumo Eléctrico -->
         <li class="menu-item {% if request.path == url_for('consumo_electrico') %} active {% endif %}">
           <a href="{{ url_for('consumo_electrico') }}" class="menu-link">
-            <i class="menu-icon bi bi-lightning-charge"></i> <!-- Icono de corriente -->
+            <i class="menu-icon bi bi-lightning-charge"></i> <!-- Ícono de electricidad -->
             <div data-i18n="Tables">Consumo Eléctrico</div>
           </a>
         </li>
       </ul>
     </li>
+
+    <!-- Grupo Administración (cerrado por defecto, solo visible para el rol 1) -->
+    {% if session['rol'] == 1 %}
+    <li class="menu-item menu-dropdown">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon bi bi-clipboard-data"></i> <!-- Ícono original de administración -->
+        <div data-i18n="Tables">Administración</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {% if request.path == '/lista-de-usuarios' %} active {% endif %}">
+          <a href="/lista-de-usuarios" class="menu-link">
+            <i class="menu-icon bi bi-person-lines-fill"></i> <!-- Ícono de usuarios -->
+            <div data-i18n="Tables">Administrar Usuarios</div>
+          </a>
+        </li>
+      </ul>
+    </li>
+    {% endif %}
     
   </ul>
 </aside>
