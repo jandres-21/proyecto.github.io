@@ -1,0 +1,79 @@
+{% extends 'public/base_cpanel.html' %}
+<!--Cambiando el title-->
+<!--Inicio del block-->
+{% block body %}
+<div class="card">
+  <div class="row ">
+    <div class="col-md-12 mb-4">
+      <h3 class="text-center mt-5 mb-3">REPORTES ACCESO</h3>
+      <hr />
+    </div>
+
+  </div>
+  <div class="row justify-content-center mb-3">
+    <div class="col-md-auto">
+      <div class="card justify-content-center"
+        style="width: 90%; align-self: center; background-color: rgb(163, 241, 181)">
+        <div class="row p-3 text-center" style="margin-bottom: -18px;">
+          <div class="col-md-6">
+            <p class="acceso"><b>Fecha Acceso Activo:</b></p>
+            <p class="acceso" style="margin-top: -10px;">{{lastAccess.fecha}}</p>
+          </div>
+          <div class="col-md-6">
+            <p class="acceso"><b>Clave Acceso Activo:</b></p>
+            <p class="acceso" style="margin-top: -10px;">{{lastAccess.clave}}</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="col-md-auto align-self-center">
+      <a href="/descargar-informe-accesos" class="btn btn-success btn-sm"
+        tooltip="Reporte de accesos">
+        <i class="bi bi-arrow-clockwise"></i>
+        Reporte
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="table-responsive text-nowrap">
+      <table class="table table-hover">
+        <thead>
+          <tr style="background-color: #ddd">
+            <th>ID</th>
+            <th>Cédula</th>
+            <th>Fecha</th>
+            <th>Área</th>
+            <th>Clave</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reporte in reportes %}
+          {% if dataLogin.rol == 2 %}
+          {% if reporte.cedula == dataLogin.cedula%}
+          <tr>
+            <td>{{ reporte.id_acceso}}</td>
+            <td>{{ reporte.cedula}}</td>
+            <td>{{ reporte.fecha}}</td>
+            <td>{{ reporte.nombre_area}}</td>
+            <td>{{ reporte.clave}}</td>
+          </tr>
+          {%endif%}
+          {%else%}
+          <tr>
+            <td>{{ reporte.id_acceso}}</td>
+            <td>{{ reporte.cedula}}</td>
+            <td>{{ reporte.fecha}}</td>
+            <td>{{ reporte.nombre_area}}</td>
+            <td>{{ reporte.clave}}</td>
+          </tr>
+          {%endif%}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

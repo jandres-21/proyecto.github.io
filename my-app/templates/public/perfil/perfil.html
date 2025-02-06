@@ -1,0 +1,338 @@
+{% extends 'public/base_cpanel.html' %}
+{% block body %}
+<div class="card" style="border-radius: 0px !important">
+  <div class="row justify-content-center mb-2">
+    <div class="col-md-12">
+      <h3 class="text-center mt-5 mb-3">MI PERFIL</h3>
+      <hr />
+    </div>
+  </div>
+
+  <div class="row justify-content-center mb-2">
+    <div class="col-md-6">
+      <form
+        class="form-horizontal mx-auto"
+        method="POST"
+        action="{{ url_for('actualizarPerfil', id=info_perfil_session[0]['id_usuario']) }}"
+        id="perfilForm"
+        onsubmit="return validateForm()">
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="cedula" class="form-label">Cédula</label>
+            <input
+              class="form-control"
+              type="text"
+              name="cedula"
+              value="{{ info_perfil_session[0]['cedula'] }}"
+              readonly />
+          </div>
+          <div class="mb-3">
+            <label for="name" class="form-label">Nombre</label>
+            <input
+              type="text"
+              name="name"
+              value="{{ info_perfil_session[0]['nombre_usuario'] }}"
+              class="form-control"
+              required 
+              pattern="[A-Za-z\s]+"
+              title="El nombre solo debe contener letras y espacios."
+              {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %} 
+                readonly 
+              {% endif %}
+            />
+          </div>
+          <div class="mb-3">
+            <label for="surname" class="form-label">Apellido</label>
+            <input
+              class="form-control"
+              type="text"
+              name="surname"
+              value="{{ info_perfil_session[0]['apellido_usuario'] }}"
+              required 
+              pattern="[A-Za-z\s]+"
+              title="El apellido solo debe contener letras y espacios."
+              {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %} 
+                readonly 
+              {% endif %}
+            />
+          </div>
+          <div>
+            <label for="area" class="form-label">Área</label>
+            {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %}
+              <!-- Si es Admin, mostramos el select deshabilitado y enviamos el valor mediante un input hidden -->
+              <select class="form-select" name="selectArea_display" disabled required>
+                {% for area in areas %}
+                  {% if area.id_area == info_perfil_session[0]['id_area'] %}
+                    <option value="{{ area.id_area }}" selected>{{ area.nombre_area }}</option>
+                  {% else %}
+                    <option value="{{ area.id_area }}">{{ area.nombre_area }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <input type="hidden" name="selectArea" value="{{ info_perfil_session[0]['id_area'] }}">
+            {% else %}
+              <select class="form-select" name="selectArea" required>
+                {% for area in areas %}
+                  {% if area.id_area == info_perfil_session[0]['id_area'] %}
+                    <option value="{{ area.id_area }}" selected>{{ area.nombre_area }}</option>
+                  {% else %}
+                    <option value="{{ area.id_area }}">{{ area.nombre_area }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="rol" class="form-label">Rol</label>
+            {% if info_perfil_session[0]['nombre_usuario'] == 'Admin' and info_perfil_session[0]['apellido_usuario'] == 'Admin' %}
+              <!-- Si es Admin, mostramos el select deshabilitado y enviamos el valor mediante un input hidden -->
+              <select class="form-select" name="selectRol_display" disabled required>
+                {% for rol in roles %}
+                  {% if rol.id_rol == info_perfil_session[0]['id_rol'] %}
+                    <option value="{{ rol.id_rol }}" selected>{{ rol.nombre_rol }}</option>
+                  {% else %}
+                    <option value="{{ rol.id_rol }}">{{ rol.nombre_rol }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <input type="hidden" name="selectRol" value="{{ info_perfil_session[0]['id_rol'] }}">
+            {% else %}
+              <select class="form-select" name="selectRol" required>
+                {% for rol in roles %}
+                  {% if rol.id_rol == info_perfil_session[0]['id_rol'] %}
+                    <option value="{{ rol.id_rol }}" selected>{{ rol.nombre_rol }}</option>
+                  {% else %}
+                    <option value="{{ rol.id_rol }}">{{ rol.nombre_rol }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label for="tarjeta" class="form-label">Tarjeta</label>
+            <div class="input-group">
+              <input
+                class="form-control"
+                type="password"
+                name="tarjeta"
+                id="tarjeta"
+                value="{{ info_perfil_session[0]['tarjeta'] }}"
+                {% if dataLogin.rol == 2 %} readonly {% endif %}
+                required />
+              <span class="input-group-text cursor-pointer" id="toggleTarjeta">
+                <i class="bx bx-hide"></i>
+              </span>
+            </div>
+            <!-- Botón para leer tarjeta RFID; se muestra solo si el rol lo permite -->
+            <button type="button" class="btn btn-secondary mt-2" id="readRFID" {% if dataLogin.rol == 2 %} style="display: none;" {% endif %}>Leer Tarjeta RFID</button>
+          </div>
+          <div class="mb-3">
+            <label for="estado" class="form-label">Estado Civil</label>
+            <select class="form-select" name="estado" required>
+              <option value="Casado" {% if info_perfil_session[0]['estado'] == 'Casado' %} selected {% endif %}>Casado</option>
+              <option value="Viudo" {% if info_perfil_session[0]['estado'] == 'Viudo' %} selected {% endif %}>Viudo</option>
+              <option value="Divorciado" {% if info_perfil_session[0]['estado'] == 'Divorciado' %} selected {% endif %}>Divorciado</option>
+              <option value="Soltero" {% if info_perfil_session[0]['estado'] == 'Soltero' %} selected {% endif %}>Soltero</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="genero" class="form-label">Género</label>
+            <select class="form-select" name="genero" required>
+              <option value="Masculino" {% if info_perfil_session[0]['genero'] == 'Masculino' %} selected {% endif %}>Masculino</option>
+              <option value="Femenino" {% if info_perfil_session[0]['genero'] == 'Femenino' %} selected {% endif %}>Femenino</option>
+            </select>
+          </div>
+
+          <!-- Clave Actual (obligatoria) -->
+          <div class="mb-3 form-password-toggle mt-3">
+            <label class="form-label" for="pass_actual">Clave Actual</label>
+            <div class="input-group input-group-merge">
+              <input
+                type="password"
+                class="form-control"
+                name="pass_actual"
+                id="pass_actual"
+                placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                aria-describedby="password" 
+                required />
+              <span class="input-group-text cursor-pointer">
+                <i class="bx bx-hide"></i>
+              </span>
+            </div>
+            <div id="claveActualError" style="color: red; display: none; font-size: 14px;">
+              Por seguridad, ingrese su clave actual para actualizar sus datos.
+            </div>
+          </div>
+
+          <!-- Nueva Clave (opcional) -->
+          <div class="mb-3 form-password-toggle">
+            <label class="form-label" for="new_pass_user">Nueva Clave</label>
+            <div class="input-group input-group-merge">
+              <input
+                type="password"
+                class="form-control"
+                name="new_pass_user"
+                id="new_pass_user"
+                placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                aria-describedby="password" />
+              <span class="input-group-text cursor-pointer">
+                <i class="bx bx-hide"></i>
+              </span>
+            </div>
+            <div id="passwordError" style="color: red; display: none;">
+              La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial valido (!@#$%^&*+\-).
+            </div>
+          </div>
+
+          <!-- Repetir Nueva Clave (opcional) -->
+          <div class="mb-3 form-password-toggle">
+            <label class="form-label" for="repetir_pass_user">Repetir Nueva Clave</label>
+            <div class="input-group input-group-merge">
+              <input
+                type="password"
+                class="form-control"
+                name="repetir_pass_user"
+                id="repetir_pass_user"
+                placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                aria-describedby="password" />
+              <span class="input-group-text cursor-pointer">
+                <i class="bx bx-hide"></i>
+              </span>
+            </div>
+            <div id="passwordMatchError" style="color: red; display: none;">
+              Las contraseñas no coinciden.
+            </div>
+          </div>
+
+        </div>
+
+        <div class="mb-3 text-center">
+          <button type="submit" class="btn rounded-pill btn-primary">
+            Actualizar mis datos
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --------------------------
+  // Lógica para leer la tarjeta RFID con polling
+  // --------------------------
+  const readRFIDButton = document.getElementById('readRFID');
+  const tarjetaInput = document.getElementById('tarjeta');
+  const originalText = readRFIDButton.textContent;
+
+  readRFIDButton.addEventListener('click', function() {
+    // Al presionar, se limpia el campo para esperar un nuevo código
+    tarjetaInput.value = "";
+    // Se actualiza el botón para indicar que se está leyendo
+    readRFIDButton.textContent = "Leyendo tarjeta...";
+    readRFIDButton.classList.remove('btn-secondary');
+    readRFIDButton.classList.add('btn-warning');
+
+    // Inicia polling cada 1 segundo
+    const pollingInterval = 1000; // 1 segundo
+    let pollingTimer = setInterval(fetchCodigo, pollingInterval);
+    
+    // Establece un tiempo máximo de 10 segundos para el polling
+    let timeoutTimer = setTimeout(() => {
+      clearInterval(pollingTimer);
+      // Si transcurren 10 segundos sin obtener un nuevo código, se limpia el campo
+      tarjetaInput.value = "";
+      restoreButton();
+    }, 10000);
+
+    function fetchCodigo() {
+      fetch('/obtener_targeta')
+        .then(response => response.json())
+        .then(data => {
+          if (data.codigo && data.codigo.trim() !== "") {
+            // Si se obtiene un código válido, se asigna al campo y se detiene el polling
+            tarjetaInput.value = data.codigo;
+            clearInterval(pollingTimer);
+            clearTimeout(timeoutTimer);
+            restoreButton();
+          }
+        })
+        .catch(error => {
+          console.error('Error al obtener el código de tarjeta:', error);
+          // En caso de error, se sigue intentando hasta que se agote el tiempo máximo
+        });
+    }
+  });
+
+  function restoreButton() {
+    readRFIDButton.textContent = originalText;
+    readRFIDButton.classList.remove('btn-warning');
+    readRFIDButton.classList.add('btn-secondary');
+  }
+
+  // --------------------------
+  // Funcionalidad para ocultar/mostrar caracteres de la tarjeta
+  // --------------------------
+  document.getElementById("toggleTarjeta").addEventListener("click", function() {
+    var tarjetaInput = document.getElementById("tarjeta");
+    var icon = this.querySelector("i");
+
+    if (tarjetaInput.type === "password") {
+      tarjetaInput.type = "text";
+      icon.classList.remove("bx-hide");
+      icon.classList.add("bx-show");
+    } else {
+      tarjetaInput.type = "password";
+      icon.classList.remove("bx-show");
+      icon.classList.add("bx-hide");
+    }
+  });
+
+  // --------------------------
+  // Validación de formulario y contraseñas seguras
+  // --------------------------
+  function validateForm() {
+    var form = document.getElementById('perfilForm');
+    var claveActual = document.getElementById('pass_actual').value;
+    var password = document.getElementById('new_pass_user').value;
+    var passwordRepeat = document.getElementById('repetir_pass_user').value;
+    var claveActualError = document.getElementById('claveActualError');
+    var passwordError = document.getElementById('passwordError');
+    var passwordMatchError = document.getElementById('passwordMatchError');
+    
+    // Verificación de clave actual
+    if (!claveActual) {
+      claveActualError.style.display = 'block';
+      return false;  // No enviar el formulario
+    } else {
+      claveActualError.style.display = 'none';
+    }
+
+    // Verificación de nueva contraseña (opcional)
+    var regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*+\-.,:;|°])[A-Za-z\d!@#$%^&*+\-.,:;|°]{8,}$/;
+    if (password && !regex.test(password)) {
+      passwordError.style.display = 'block';
+      return false;  // No enviar el formulario
+    } else {
+      passwordError.style.display = 'none';
+    }
+
+    // Verificar que las contraseñas coincidan
+    if (password && password !== passwordRepeat) {
+      passwordMatchError.style.display = 'block';
+      return false;
+    } else {
+      passwordMatchError.style.display = 'none';
+    }
+
+    // Verificación de campos vacíos requeridos
+    var inputs = form.querySelectorAll('input[required]');
+    for (var i = 0; i < inputs.length; i++) {
+      if (!inputs[i].value) {
+        alert('Por favor, complete todos los campos requeridos.');
+        return false;
+      }
+    }
+  }
+</script>
+
+{% endblock %}
