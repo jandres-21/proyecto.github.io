@@ -189,11 +189,11 @@ try:
             if "uid de la tarjeta:" in linea_rfid.lower():
                 uid = linea_rfid.split(":")[1].strip().lower()
                 print(f"UID procesado: {uid}")
-                # Consultar en la base de datos
-                cursor.execute("SELECT * FROM usuarios WHERE LOWER(tarjeta) = %s", (uid,))
+                # Consultar en la base de datos, seleccionando explícitamente la columna "cedula"
+                cursor.execute("SELECT cedula FROM usuarios WHERE LOWER(tarjeta) = %s", (uid,))
                 result = cursor.fetchone()
                 estado_acceso = "permitido" if result else "denegado"
-                # CORRECCIÓN: Se asume que la cedula es la primera columna del resultado
+                # Se obtiene la cédula en la posición 0, ya que la consulta trae solo esa columna
                 cedula_usuario = result[0] if result else None
                 guardar_datos_rfid(uid, estado_acceso, cedula_usuario)
                 if result:
@@ -208,9 +208,9 @@ try:
                     """, (uid,))
                     db_connection.commit()
                     print(f"Registro guardado en 'Targeta' con código: {uid}")
-                    # Esperar 5 segundos antes de eliminar el registro
+                    # Esperar 10 segundos antes de eliminar el registro
                     time.sleep(10)
-                    # Eliminar el registro después de 3 segundos
+                    # Eliminar el registro (TRUNCATE vacía la tabla)
                     cursor.execute("TRUNCATE TABLE Targeta")
                     db_connection.commit()
                     print(f"Registro con código {uid} eliminado después de 3 segundos.")
