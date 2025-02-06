@@ -9,8 +9,8 @@ def connectionBD():
         connection = mysql.connector.connect(
             host="34.57.72.162",      # Host de la base de datos
             port=3306,                           # Puerto
-            user="root",                          # Usuario
-            passwd="HfvkMwoYEeFwlmqQJbRZAXnyaXciAojX",  # Contraseña
+            user="Andres",                          # Usuario
+            passwd="Andres1234",  # Contraseña
             database="railway",                   # Base de datos
             charset='utf8mb4',                    # Codificación de caracteres
             collation='utf8mb4_unicode_ci',       # Colación
