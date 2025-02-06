@@ -198,10 +198,6 @@ except serial.SerialException as error:
     print(f"Error al conectar con los puertos seriales: {error}")
     ser_rfid = ser_sensor = None
 
-from flask_socketio import SocketIO, emit
-
-socketio = SocketIO(app)
-
 def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
     try:
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
@@ -212,23 +208,9 @@ def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
         """, (uid, estado_acceso, fecha_actual, hora_actual, cedula_usuario))
         db_connection.commit()
         print(f"Acceso guardado: {uid}, Estado: {estado_acceso}")
-        
-        # Emitir evento de actualización en tiempo real con los datos del nuevo registro
-        nuevo_registro = {
-            'cedula': cedula_usuario,
-            # Asegúrate de obtener o definir los siguientes campos:
-            'nombre': 'Nombre del usuario',     # Por ejemplo, extraído de la consulta o asignado
-            'apellido': 'Apellido del usuario', # Igual que el anterior
-            'fecha': fecha_actual,
-            'hora': hora_actual,
-            'estado': estado_acceso,
-            'uid_tarjeta': uid
-        }
-        socketio.emit('new_rfid_record', nuevo_registro)
     except mysql.connector.Error as error:
         print(f"Error al guardar datos RFID: {error}")
-
-
+#comentario
 # Loop principal
 try:
     while ser_rfid and ser_sensor and ser_rfid.is_open and ser_sensor.is_open:
