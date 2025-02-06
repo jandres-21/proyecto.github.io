@@ -166,32 +166,16 @@ except serial.SerialException as error:
     print(f"Error al conectar con los puertos seriales: {error}")
     ser_rfid = ser_sensor = None
 
-#Guardar datos en rfid tabla    
 def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
     try:
-        # Verificar si la cédula existe en la tabla usuarios
-        cursor.execute("SELECT COUNT(*) FROM usuarios WHERE cedula = %s", (cedula_usuario,))
-        resultado = cursor.fetchone()
-
-        # Si la cédula no existe, asignar NULL a la variable cedula y denegar el acceso
-        if resultado[0] == 0:
-            cedula_usuario = None
-            estado_acceso = 'denegado'  # Si no existe cédula, se deniega el acceso
-        else:
-            estado_acceso = 'permitido'  # Si existe cédula, se permite el acceso
-
-        # Obtener fecha y hora actual
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
         hora_actual = datetime.now().strftime('%H:%M:%S')
-
-        # Insertar en la tabla rfid_tarjetas
         cursor.execute(""" 
             INSERT INTO rfid_tarjetas (uid_tarjeta, estado, fecha, hora, cedula)
             VALUES (%s, %s, %s, %s, %s)
         """, (uid, estado_acceso, fecha_actual, hora_actual, cedula_usuario))
-        
         db_connection.commit()
-        print(f"Acceso guardado: {uid}, Estado: {estado_acceso}, Cedula: {cedula_usuario}")
+        print(f"Acceso guardado: {uid}, Estado: {estado_acceso}")
     except mysql.connector.Error as error:
         print(f"Error al guardar datos RFID: {error}")
 
@@ -209,7 +193,8 @@ try:
                 cursor.execute("SELECT * FROM usuarios WHERE LOWER(tarjeta) = %s", (uid,))
                 result = cursor.fetchone()
                 estado_acceso = "permitido" if result else "denegado"
-                cedula_usuario = result[1] if result else None
+                # CORRECCIÓN: Se asume que la cedula es la primera columna del resultado
+                cedula_usuario = result[0] if result else None
                 guardar_datos_rfid(uid, estado_acceso, cedula_usuario)
                 if result:
                     ser_rfid.write(b'1')
@@ -277,5 +262,3 @@ finally:
     if ser_sensor and ser_sensor.is_open:
         ser_sensor.close()
     print("Conexiones cerradas.")
-
-    
