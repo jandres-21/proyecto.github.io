@@ -13,14 +13,14 @@
     <!-- Botón para generar Excel (solo visible para rol 1) -->
     {% if dataLogin.rol == 1 %}
     <div class="text-center mb-4">
-      <button id="btnExportarExcel" class="btn" style="background-color: #1e88e5; border-color: #1e88e5; color: white;">Generar Excel</button>
+      <button id="btnExportarExcel" class="btn btn-primary">Generar Excel</button>
     </div>
     {% endif %}
 
     <div class="table-responsive text-nowrap">
       <table class="table table-hover" id="tablaRFID">
         <thead>
-          <tr style="background-color: #ddd">
+          <tr class="table-secondary">
             <th>Cédula</th>
             <th>Nombre</th>
             <th>Apellido</th>
@@ -41,11 +41,7 @@
             <td>{{ registro.fecha }}</td>
             <td>{{ registro.hora }}</td>
             <td class="fw-bold text-center">
-              <span {% if registro.estado == 'permitido' %} style="color: green;" 
-                    {% elif registro.estado == 'denegado' %} style="color: red;" 
-                    {% else %} style="color: gray;" {% endif %}>
-                {{ registro.estado }}
-              </span>
+              <span class="estado-badge" data-estado="{{ registro.estado }}" style="color: {{ 'red' if registro.estado == 'denegado' else 'green' }}">{{ registro.estado }}</span>
             </td>
             {% if dataLogin.rol == 1 %}  <!-- Solo visible para rol 1 -->
             <td>
@@ -63,273 +59,86 @@
       </table>
     </div>
     <!-- Contenedor de paginación -->
-    <div id="pagination" class="pagination-container mt-3" style="text-align: center;"></div>
+    <div id="pagination" class="pagination-container mt-3 text-center"></div>
   </section>
 </div>
 {% endblock %}
 
 {% block customJS %}
-<!-- Asegúrate de tener cargado socket.io, XLSX y FontAwesome (para el ícono) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // ----------------------------
-    // Funcionalidad para paginación
-    // ----------------------------
     const rowsPerPage = 15;
     let currentPage = 1;
     
-    // Actualiza la visualización de los registros según la página actual
     function updateTablePagination() {
-      const tbody = document.querySelector('#tablaRFID tbody');
-      const rows = tbody.querySelectorAll('tr');
-      const totalRows = rows.length;
-      const totalPages = Math.ceil(totalRows / rowsPerPage);
+      const rows = document.querySelectorAll('#tablaRFID tbody tr');
+      const totalPages = Math.ceil(rows.length / rowsPerPage);
       if (currentPage > totalPages) currentPage = totalPages;
       rows.forEach((row, index) => {
-        if (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) {
-          row.style.display = '';
-        } else {
-          row.style.display = 'none';
-        }
+        row.style.display = (index >= (currentPage - 1) * rowsPerPage && index < currentPage * rowsPerPage) ? '' : 'none';
       });
     }
 
-    // Renderiza los controles de paginación (máximo 5 números visibles con "..." cuando sea necesario)
     function renderPaginationControls() {
-      const tbody = document.querySelector('#tablaRFID tbody');
-      const rows = tbody.querySelectorAll('tr');
-      const totalRows = rows.length;
-      const totalPages = Math.ceil(totalRows / rowsPerPage);
+      const rows = document.querySelectorAll('#tablaRFID tbody tr');
+      const totalPages = Math.ceil(rows.length / rowsPerPage);
       const paginationContainer = document.getElementById('pagination');
       paginationContainer.innerHTML = '';
+      if (totalPages <= 1) return;
 
-      if(totalPages <= 1) return;
-
-      // Botón "Anterior"
       const prevBtn = document.createElement('button');
       prevBtn.textContent = "Anterior";
-      prevBtn.style.margin = "0 5px";
+      prevBtn.classList.add('btn', 'btn-secondary', 'mx-1');
       prevBtn.disabled = (currentPage === 1);
-      prevBtn.addEventListener('click', function() {
-        setPage(currentPage - 1);
-      });
+      prevBtn.addEventListener('click', () => setPage(currentPage - 1));
       paginationContainer.appendChild(prevBtn);
-
-      // Lógica para mostrar máximo 5 botones de página (incluyendo la primera y última)
-      let start = currentPage - 1;
-      let end = currentPage + 1;
-      if(start < 2) {
-        start = 2;
-        end = 4;
+      
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.classList.add('btn', 'mx-1', (i === currentPage) ? 'btn-primary' : 'btn-outline-primary');
+        btn.addEventListener('click', () => setPage(i));
+        paginationContainer.appendChild(btn);
       }
-      if(end > totalPages - 1) {
-        end = totalPages - 1;
-        start = totalPages - 3;
-        if(start < 2) start = 2;
-      }
-      let pageItems = [];
-      pageItems.push(1);
-      if(start > 2) {
-        pageItems.push("...");
-      }
-      for(let i = start; i <= end; i++){
-        pageItems.push(i);
-      }
-      if(end < totalPages - 1) {
-        pageItems.push("...");
-      }
-      if(totalPages > 1) {
-        pageItems.push(totalPages);
-      }
-
-      // Se generan los botones o etiquetas para cada elemento
-      pageItems.forEach(item => {
-        if(item === "...") {
-          const span = document.createElement('span');
-          span.textContent = "...";
-          span.style.margin = "0 5px";
-          paginationContainer.appendChild(span);
-        } else {
-          const btn = document.createElement('button');
-          btn.textContent = item;
-          btn.style.margin = "0 5px";
-          if(item === currentPage) btn.classList.add('active');
-          btn.addEventListener('click', function() {
-            setPage(item);
-          });
-          paginationContainer.appendChild(btn);
-        }
-      });
-
-      // Botón "Siguiente"
+      
       const nextBtn = document.createElement('button');
       nextBtn.textContent = "Siguiente";
-      nextBtn.style.margin = "0 5px";
+      nextBtn.classList.add('btn', 'btn-secondary', 'mx-1');
       nextBtn.disabled = (currentPage === totalPages);
-      nextBtn.addEventListener('click', function() {
-        setPage(currentPage + 1);
-      });
+      nextBtn.addEventListener('click', () => setPage(currentPage + 1));
       paginationContainer.appendChild(nextBtn);
     }
 
-    // Cambia la página actual y actualiza la tabla y los controles
     function setPage(page) {
       currentPage = page;
       updateTablePagination();
       renderPaginationControls();
     }
 
-    // Inicializamos la paginación
     updateTablePagination();
     renderPaginationControls();
 
-    // ----------------------------
-    // Funcionalidad de mostrar/ocultar el UID
-    // ----------------------------
-    document.querySelectorAll(".toggle-uid").forEach(button => {
-      button.addEventListener("click", function () {
-        let input = this.previousElementSibling;
-        let icon = this.querySelector("i");
-        
-        if (input.type === "password") {
-          input.type = "text";
-          icon.classList.remove("fa-eye");
-          icon.classList.add("fa-eye-slash");
-        } else {
-          input.type = "password";
-          icon.classList.remove("fa-eye-slash");
-          icon.classList.add("fa-eye");
-        }
-      });
-    });
-
-    // Exportar a Excel (solo para rol 1)
-    {% if dataLogin.rol == 1 %}
-    document.getElementById("btnExportarExcel").addEventListener("click", function () {
-      let table = document.getElementById('tablaRFID');
-      let clonedTable = table.cloneNode(true);
-      let rows = clonedTable.querySelectorAll('tbody tr');
-      rows.forEach(row => {
-        let uidCell = row.cells[6]; 
-        if (uidCell) {
-          uidCell.innerText = '********'; // Ocultar el UID en el Excel
-        }
-      });
-      var wb = XLSX.utils.table_to_book(clonedTable, {sheet:"Registro RFID"});
-      XLSX.writeFile(wb, "registro_rfid.xlsx");
-    });
-    {% endif %}
-
-    // ----------------------------
-    // Conexión con Socket.IO para actualizaciones en tiempo real
-    // ----------------------------
     const socket = io();
-
-    // Cuando se recibe un nuevo registro RFID
     socket.on('new_rfid_record', function(data) {
-      // Crear la nueva fila para la tabla
-      const nuevaFila = document.createElement('tr');
-      
-      // Crear las celdas con la información
-      const celdaCedula = document.createElement('td');
-      celdaCedula.textContent = data.cedula;
-      nuevaFila.appendChild(celdaCedula);
-
-      const celdaNombre = document.createElement('td');
-      celdaNombre.textContent = data.nombre || 'Sin Nombre';
-      nuevaFila.appendChild(celdaNombre);
-
-      const celdaApellido = document.createElement('td');
-      celdaApellido.textContent = data.apellido || 'Sin Apellido';
-      nuevaFila.appendChild(celdaApellido);
-
-      const celdaFecha = document.createElement('td');
-      celdaFecha.textContent = data.fecha;
-      nuevaFila.appendChild(celdaFecha);
-
-      const celdaHora = document.createElement('td');
-      celdaHora.textContent = data.hora;
-      nuevaFila.appendChild(celdaHora);
-
-      const celdaEstado = document.createElement('td');
-      celdaEstado.classList.add('fw-bold', 'text-center');
-      const spanEstado = document.createElement('span');
-      // Configurar el color según el estado:
-      // Si el estado es "permitido", la notificación debe ser ROJA.
-      // Si es "denegado", la notificación será CELeste.
-      if(data.estado === 'permitido'){
-        spanEstado.style.color = 'red';
-      } else if(data.estado === 'denegado'){
-        spanEstado.style.color = '#1e88e5';
-      } else {
-        spanEstado.style.color = 'gray';
-      }
-      spanEstado.textContent = data.estado;
-      celdaEstado.appendChild(spanEstado);
-      nuevaFila.appendChild(celdaEstado);
-
-      // Si el rol es 1, se incluye la celda de UID
-      {% if dataLogin.rol == 1 %}
-      const celdaUID = document.createElement('td');
-      const divInputGroup = document.createElement('div');
-      divInputGroup.classList.add('input-group');
-      const inputUID = document.createElement('input');
-      inputUID.type = 'password';
-      inputUID.classList.add('form-control', 'uid-tarjeta');
-      inputUID.value = data.uid_tarjeta;
-      inputUID.readOnly = true;
-      inputUID.style.maxWidth = '120px';
-      const btnToggle = document.createElement('button');
-      btnToggle.type = 'button';
-      btnToggle.classList.add('btn', 'btn-outline-secondary', 'toggle-uid');
-      btnToggle.innerHTML = '<i class="fa-solid fa-eye"></i>';
-      btnToggle.addEventListener("click", function () {
-        let input = this.previousElementSibling;
-        let icon = this.querySelector("i");
-        if (input.type === "password") {
-          input.type = "text";
-          icon.classList.remove("fa-eye");
-          icon.classList.add("fa-eye-slash");
-        } else {
-          input.type = "password";
-          icon.classList.remove("fa-eye-slash");
-          icon.classList.add("fa-eye");
-        }
-      });
-      divInputGroup.appendChild(inputUID);
-      divInputGroup.appendChild(btnToggle);
-      celdaUID.appendChild(divInputGroup);
-      nuevaFila.appendChild(celdaUID);
-      {% endif %}
-
-      // Insertar la nueva fila AL INICIO del tbody para que los nuevos registros aparezcan primero
       const tbody = document.getElementById('tablaRFID').querySelector('tbody');
-      tbody.insertBefore(nuevaFila, tbody.firstChild);
-
-      // Actualizamos la paginación (los nuevos registros se tendrán en cuenta)
+      const notification = document.getElementById('rfid_notification');
+      notification.textContent = `Nuevo intento de acceso detectado, Estado ${data.estado}`;
+      notification.style.backgroundColor = data.estado === 'denegado' ? 'red' : 'lightblue';
+      notification.style.display = 'block';
+      setTimeout(() => notification.style.display = 'none', 5000);
+      const row = `<tr>
+        <td>${data.cedula}</td>
+        <td>${data.nombre || 'Sin Nombre'}</td>
+        <td>${data.apellido || 'Sin Apellido'}</td>
+        <td>${data.fecha}</td>
+        <td>${data.hora}</td>
+        <td class="fw-bold text-center" style="color: ${data.estado === 'denegado' ? 'red' : 'green'}">${data.estado}</td>
+      </tr>`;
+      tbody.insertAdjacentHTML('afterbegin', row);
       updateTablePagination();
       renderPaginationControls();
-
-      // Mostrar notificación en la parte superior con el mensaje "Nuevo intento de acceso detectado"
-      const notificacion = document.getElementById('rfid_notification');
-      if(data.estado === 'permitido'){
-        notificacion.style.backgroundColor = 'rgba(255, 0, 0, 0.2)'; // fondo rojo
-        notificacion.style.color = 'red';
-      } else if(data.estado === 'denegado'){
-        notificacion.style.backgroundColor = 'rgba(30, 136, 229, 0.2)'; // fondo celeste
-        notificacion.style.color = '#1e88e5';
-      } else {
-        notificacion.style.backgroundColor = 'gray';
-        notificacion.style.color = 'white';
-      }
-      notificacion.textContent = `Nuevo intento de acceso detectado: Estado ${data.estado}`;
-      notificacion.style.display = 'block';
-      // Ocultar la notificación automáticamente después de 5 segundos
-      setTimeout(function(){
-        notificacion.style.display = 'none';
-      }, 5000);
     });
   });
 </script>
