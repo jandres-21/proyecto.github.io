@@ -5,20 +5,23 @@
     {% if resp_usuariosBD %}
         <div class="card content_consignaciones" style="border-radius: 0px !important">
             <section id="respuestaFiltroMes">
-                <h2 class="text-center mt-5 mb-5">
+                <h2 class="mt-5 mb-5">
                     Lista de Usuarios
                     <hr />
                 </h2>
-
-                <!-- Botón Nuevo Usuario con color celeste #1e88e5 -->
-                <p class="btn" style="margin-left: 10px; background-color: #1e88e5 !important; border-color: #1e88e5 !important;">
-                    <a href="./register-user" style="color: white; text-decoration: none;">
+                
+                <!-- Contenedor para los botones, alineados a la izquierda -->
+                <div class="d-flex justify-content-start mb-4">
+                    <a href="./register-user" class="btn" style="background-color: #1e88e5 !important; border-color: #1e88e5 !important; color: white; margin-right: 10px;">
                         Nuevo Usuario
                     </a>
-                </p>
-
+                    <button id="btnExportarExcel" class="btn" style="background-color: #1e88e5 !important; border-color: #1e88e5 !important; color: white;">
+                        Generar Excel
+                    </button>
+                </div>
+                
                 <div class="table-responsive text-nowrap">
-                    <table class="table table-hover">
+                    <table class="table table-hover" id="tablaUsuarios">
                         <thead>
                             <tr style="background-color: #ddd">
                                 <th>Cédula</th>
@@ -38,16 +41,16 @@
                                 <td>{{ usuario.nombre_usuario }} {{ usuario.apellido_usuario }}</td>
                                 <td>
                                     {% for area in areas %}
-                                    {% if area.id_area == usuario.id_area %}
-                                    {{ area.nombre_area }}
-                                    {% endif %}
+                                        {% if area.id_area == usuario.id_area %}
+                                            {{ area.nombre_area }}
+                                        {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>
                                     {% for rol in roles %}
-                                    {% if rol.id_rol == usuario.id_rol %}
-                                    {{ rol.nombre_rol }}
-                                    {% endif %}
+                                        {% if rol.id_rol == usuario.id_rol %}
+                                            {{ rol.nombre_rol }}
+                                        {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>
@@ -93,35 +96,86 @@
 {% endblock %}
 
 {% block customJS %}
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        document.querySelectorAll(".toggle-tarjeta").forEach(function(toggleIcon) {
-            toggleIcon.addEventListener("click", function() {
-                var id = this.getAttribute("data-id");
-                var tarjetaInput = document.getElementById("tarjeta_" + id);
-
-                if (tarjetaInput.type === "password") {
-                    tarjetaInput.type = "text";
-                    this.classList.remove("bi-eye");
-                    this.classList.add("bi-eye-slash");
-                } else {
-                    tarjetaInput.type = "password";
-                    this.classList.remove("bi-eye-slash");
-                    this.classList.add("bi-eye");
+    <!-- Se incluye la librería XLSX -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Funcionalidad para mostrar/ocultar la tarjeta
+            document.querySelectorAll(".toggle-tarjeta").forEach(function(toggleIcon) {
+                toggleIcon.addEventListener("click", function() {
+                    var id = this.getAttribute("data-id");
+                    var tarjetaInput = document.getElementById("tarjeta_" + id);
+    
+                    if (tarjetaInput.type === "password") {
+                        tarjetaInput.type = "text";
+                        this.classList.remove("bi-eye");
+                        this.classList.add("bi-eye-slash");
+                    } else {
+                        tarjetaInput.type = "password";
+                        this.classList.remove("bi-eye-slash");
+                        this.classList.add("bi-eye");
+                    }
+                });
+            });
+            
+            // Funcionalidad para generar Excel sin la columna "Acciones"
+            document.getElementById('btnExportarExcel').addEventListener('click', function () {
+                const table = document.getElementById('tablaUsuarios');
+                const data = [];
+    
+                // Recorrer el encabezado para identificar las columnas a omitir
+                const headerCells = table.querySelector('thead tr').cells;
+                const headerRow = [];
+                const skipIndexes = [];
+    
+                for (let i = 0; i < headerCells.length; i++) {
+                    // Convertir a minúsculas y usar includes para mayor robustez
+                    const text = headerCells[i].innerText.trim().toLowerCase();
+                    if (text.includes("acciones")) {
+                        skipIndexes.push(i);
+                    } else {
+                        headerRow.push(headerCells[i].innerText.trim());
+                    }
                 }
+                data.push(headerRow);
+    
+                // Recorrer las filas del cuerpo de la tabla
+                const bodyRows = table.querySelectorAll('tbody tr');
+                bodyRows.forEach(row => {
+                    const rowData = [];
+                    const cells = row.cells;
+                    for (let i = 0; i < cells.length; i++) {
+                        if (skipIndexes.includes(i)) continue;  // Omitir la columna "Acciones"
+    
+                        // Si la celda contiene un input (por ejemplo, la tarjeta), se reemplaza su valor por "*******"
+                        if (cells[i].querySelector('input')) {
+                            rowData.push("*******");
+                        } else {
+                            rowData.push(cells[i].innerText.trim());
+                        }
+                    }
+                    data.push(rowData);
+                });
+    
+                // Crear la hoja de cálculo y el libro usando XLSX
+                const ws = XLSX.utils.aoa_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    
+                // Descargar el archivo Excel con el nombre "log_registros.xlsx"
+                XLSX.writeFile(wb, 'log_registros.xlsx');
             });
         });
-    });
-
-    function confirmarEliminar(id) {
-        if (!id) {
-            console.error("ID de usuario inválido");
-            return;
+    
+        function confirmarEliminar(id) {
+            if (!id) {
+                console.error("ID de usuario inválido");
+                return;
+            }
+            var respuesta = confirm("¿Estás seguro que deseas eliminar este usuario?");
+            if (respuesta) {
+                document.getElementById("form_eliminar_" + id).submit();
+            }
         }
-        var respuesta = confirm("¿Estás seguro que deseas eliminar este usuario?");
-        if (respuesta) {
-            document.getElementById("form_eliminar_" + id).submit();
-        }
-    }
-</script>
+    </script>
 {% endblock %}
