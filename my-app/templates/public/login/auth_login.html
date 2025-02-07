@@ -9,6 +9,8 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <!-- Asegúrate de incluir Boxicons o la librería de iconos que uses -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <style>
       /* Reset global de márgenes y paddings */
       html,
@@ -89,7 +91,7 @@
                       aria-describedby="password"
                       required
                     />
-                    <span class="input-group-text cursor-pointer">
+                    <span class="input-group-text cursor-pointer" id="togglePassword">
                       <i class="bx bx-hide"></i>
                     </span>
                   </div>
@@ -108,5 +110,29 @@
     </div>
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Script para toggle de contraseña -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const togglePassword = document.getElementById("togglePassword");
+        const passwordInput = document.getElementById("pass_user");
+
+        togglePassword.addEventListener("click", function () {
+          // Cambiar el tipo de input
+          const currentType = passwordInput.getAttribute("type");
+          const newType = currentType === "password" ? "text" : "password";
+          passwordInput.setAttribute("type", newType);
+
+          // Cambiar la clase del icono para reflejar el cambio
+          const icon = togglePassword.querySelector("i");
+          if (newType === "text") {
+            icon.classList.remove("bx-hide");
+            icon.classList.add("bx-show");
+          } else {
+            icon.classList.remove("bx-show");
+            icon.classList.add("bx-hide");
+          }
+        });
+      });
+    </script>
   </body>
 </html>
