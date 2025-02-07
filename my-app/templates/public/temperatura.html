@@ -118,7 +118,9 @@
     actualizarEstadoVentilacion(temperaturaActual);
   });
 
-  // Actualizar los registros de temperatura en tiempo real
+  // Se ha eliminado la actualización en tiempo real de la tabla
+  // para que esta solo muestre los registros almacenados en la base de datos.
+  /*
   socket.on('new_temperature_record', function(data) {
     const tabla = document.getElementById('tabla_temperaturas');
     const nuevaFila = document.createElement('tr');
@@ -135,5 +137,6 @@
     // Insertar la nueva fila al principio de la tabla
     tabla.insertBefore(nuevaFila, tabla.firstChild);
   });
+  */
 </script>
 {% endblock %}
