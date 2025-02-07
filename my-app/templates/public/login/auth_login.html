@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Página de Inicio de Sesión</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* Reset global de márgenes y paddings */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #e0e0e0;
+        overflow-x: hidden;
+        height: 100%;
+      }
+      /* Box-sizing para todos los elementos */
+      * {
+        box-sizing: border-box;
+      }
+      /* Estilos personalizados para el botón */
+      .btn-custom {
+        background-color: #1e88e5; /* Color de fondo que asume que combina con el logo */
+        border-color: #1e88e5;
+        color: #fff;
+        transition: background-color 0.3s, border-color 0.3s;
+      }
+      .btn-custom:hover {
+        background-color: #1565c0;
+        border-color: #1565c0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      class="container-xxl d-flex align-items-center justify-content-center"
+      style="position: fixed; top: 0; left: 0; right: 0; bottom: 0;"
+    >
+      <div class="authentication-wrapper authentication-basic container-p-y">
+        <div class="authentication-inner">
+          <div
+            class="card shadow-lg"
+            style="background: #ffffff; border-radius: 10px; padding: 20px;"
+          >
+            <div class="card-body">
+              <div class="app-brand justify-content-center">
+                <span class="app-brand-logo">
+                  <img
+                    class="logo"
+                    style="display: flex; width: 150px; height: auto;"
+                    src="{{ url_for('static', filename ='./assets/img/logo.png') }}"
+                    alt="Logo"
+                  />
+                </span>
+              </div>
+              <form
+                id="formAuthentication"
+                class="mb-3"
+                action="{{ url_for('loginCliente') }}"
+                method="POST"
+              >
+                <div class="mb-3">
+                  <label for="cedula" class="form-label">Cédula</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    name="cedula"
+                    placeholder="Escribe tu cédula"
+                    autofocus
+                    required
+                  />
+                </div>
+                <div class="mb-3 form-password-toggle">
+                  <div class="d-flex justify-content-between">
+                    <label class="form-label" for="password">Clave</label>
+                  </div>
+                  <div class="input-group input-group-merge">
+                    <input
+                      type="password"
+                      class="form-control"
+                      name="pass_user"
+                      id="pass_user"
+                      placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                      aria-describedby="password"
+                      required
+                    />
+                    <span class="input-group-text cursor-pointer">
+                      <i class="bx bx-hide"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <!-- Se reemplaza btn-primary por btn-custom -->
+                  <button class="btn btn-custom w-100" type="submit">
+                    Entrar ahora <i class="bi bi-arrow-right-circle"></i>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
