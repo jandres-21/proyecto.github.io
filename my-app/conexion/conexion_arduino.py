@@ -270,7 +270,7 @@ try:
                     # Guardar la temperatura en la tabla adecuada
                     guardar_temperatura(temperatura)
 
-                    guardar_datos_gas(gas)  #guardar datos gas
+                    guardar_datos_gas(gas, umbral_gas)  #guardar datos gas
 
                     # Guardar los datos de voltaje y corriente
                     guardar_datos_electricos(voltaje, corriente, cursor, db_connection)
