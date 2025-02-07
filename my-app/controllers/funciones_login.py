@@ -24,7 +24,7 @@ def recibeInsertRegisterUser(cedula, name, surname, pass_user, tarjeta, id_area,
                     INSERT INTO usuarios(cedula, nombre_usuario, apellido_usuario, password, tarjeta, id_area, id_rol, estado, genero) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s ,%s, %s)
                     """
-                    valores = (cedula, name, surname, pass_user, tarjeta, id_area, id_rol, estado, genero)
+                    valores = (cedula, name, surname, nueva_password, tarjeta, id_area, id_rol, estado, genero)
                     mycursor.execute(sql, valores)
                     conexion_MySQLdb.commit()
                     resultado_insert = mycursor.rowcount
