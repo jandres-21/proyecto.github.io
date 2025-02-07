@@ -263,18 +263,14 @@ try:
                     voltaje = float(match.group(3))
                     corriente = float(match.group(4))
 
-                    # Guardar la temperatura en la tabla adecuada
+                    # Guardar la temperatura en la tabla adecuadaa
                     guardar_temperatura(temperatura)
 
-                    # Solo guardar el primer registro cuando el gas supera el umbral
                     if gas > umbral_gas:
-                        if not gas_superado:  # Solo registrar si no se ha registrado antes
-                            guardar_datos_gas(gas, umbral_gas)
-                            gas_superado = True
-                    else:
-                        gas_superado = False  # Reinicia la bandera si vuelve a valores normales
+                      guardar_datos_gas(gas, umbral_gas)
 
-                    # Guardar los datos de voltaje y corriente
+
+                    # Guardar los datos de voltaje y corrsiente
                     guardar_datos_electricos(voltaje, corriente, cursor, db_connection)
 
                 except ValueError as e:
