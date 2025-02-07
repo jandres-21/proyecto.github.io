@@ -119,7 +119,8 @@
                 value="{{ info_perfil_session[0]['tarjeta'] }}"
                 {% if dataLogin.rol == 2 %} readonly {% endif %}
                 required />
-              <span class="input-group-text cursor-pointer" id="toggleTarjeta">
+              <!-- Botón para mostrar/ocultar la tarjeta -->
+              <span class="input-group-text cursor-pointer">
                 <i class="bx bx-hide"></i>
               </span>
             </div>
@@ -164,7 +165,7 @@
             </div>
           </div>
 
-          <!-- Nueva Clave (opcional) -->
+          <!-- Nueva Clave (obligatoria) -->
           <div class="mb-3 form-password-toggle">
             <label class="form-label" for="new_pass_user">Nueva Clave</label>
             <div class="input-group input-group-merge">
@@ -174,17 +175,19 @@
                 name="new_pass_user"
                 id="new_pass_user"
                 placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                aria-describedby="password" />
+                aria-describedby="password"
+                required
+              />
               <span class="input-group-text cursor-pointer">
                 <i class="bx bx-hide"></i>
               </span>
             </div>
             <div id="passwordError" style="color: red; display: none;">
-              La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial valido (!@#$%^&*+\-).
+              La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial válido (!@#$%^&*+\-).
             </div>
           </div>
 
-          <!-- Repetir Nueva Clave (opcional) -->
+          <!-- Repetir Nueva Clave (obligatoria) -->
           <div class="mb-3 form-password-toggle">
             <label class="form-label" for="repetir_pass_user">Repetir Nueva Clave</label>
             <div class="input-group input-group-merge">
@@ -194,7 +197,9 @@
                 name="repetir_pass_user"
                 id="repetir_pass_user"
                 placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                aria-describedby="password" />
+                aria-describedby="password"
+                required
+              />
               <span class="input-group-text cursor-pointer">
                 <i class="bx bx-hide"></i>
               </span>
@@ -203,7 +208,6 @@
               Las contraseñas no coinciden.
             </div>
           </div>
-
         </div>
 
         <div class="mb-3 text-center">
@@ -215,7 +219,9 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
+{% block customJS %}
 <script>
   // --------------------------
   // Lógica para leer la tarjeta RFID con polling
@@ -270,21 +276,25 @@
   }
 
   // --------------------------
-  // Funcionalidad para ocultar/mostrar caracteres de la tarjeta
+  // Funcionalidad para ocultar/mostrar contraseñas
   // --------------------------
-  document.getElementById("toggleTarjeta").addEventListener("click", function() {
-    var tarjetaInput = document.getElementById("tarjeta");
-    var icon = this.querySelector("i");
+  // Se asigna el mismo comportamiento a todos los botones de toggle (los spans con la clase cursor-pointer)
+  document.querySelectorAll('.input-group-text.cursor-pointer').forEach(function(toggleButton) {
+    toggleButton.addEventListener('click', function() {
+      // Busca el input de contraseña en el mismo grupo
+      const input = this.closest('.input-group').querySelector('input');
+      const icon = this.querySelector('i');
 
-    if (tarjetaInput.type === "password") {
-      tarjetaInput.type = "text";
-      icon.classList.remove("bx-hide");
-      icon.classList.add("bx-show");
-    } else {
-      tarjetaInput.type = "password";
-      icon.classList.remove("bx-show");
-      icon.classList.add("bx-hide");
-    }
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('bx-hide');
+        icon.classList.add('bx-show');
+      } else {
+        input.type = 'password';
+        icon.classList.remove('bx-show');
+        icon.classList.add('bx-hide');
+      }
+    });
   });
 
   // --------------------------
@@ -307,7 +317,7 @@
       claveActualError.style.display = 'none';
     }
 
-    // Verificación de nueva contraseña (opcional)
+    // Verificación de nueva contraseña (ya es obligatoria, pero validamos formato)
     var regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*+\-.,:;|°])[A-Za-z\d!@#$%^&*+\-.,:;|°]{8,}$/;
     if (password && !regex.test(password)) {
       passwordError.style.display = 'block';
@@ -332,7 +342,8 @@
         return false;
       }
     }
+
+    return true; // Si todo es correcto, se envía el formulario
   }
 </script>
-
 {% endblock %}
