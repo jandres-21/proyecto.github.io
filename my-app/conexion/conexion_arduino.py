@@ -198,33 +198,19 @@ except serial.SerialException as error:
     print(f"Error al conectar con los puertos seriales: {error}")
     ser_rfid = ser_sensor = None
 
-from flask_socketio import SocketIO, emit
-
-socketio = SocketIO(app)
-
 def guardar_datos_rfid(uid, estado_acceso, cedula_usuario):
     try:
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
         hora_actual = datetime.now().strftime('%H:%M:%S')
-        cursor.execute(""" 
+        
+        query = """
             INSERT INTO rfid_tarjetas (uid_tarjeta, estado, fecha, hora, cedula)
             VALUES (%s, %s, %s, %s, %s)
-        """, (uid, estado_acceso, fecha_actual, hora_actual, cedula_usuario))
+        """
+        cursor.execute(query, (uid, estado_acceso, fecha_actual, hora_actual, cedula_usuario))
         db_connection.commit()
         print(f"Acceso guardado: {uid}, Estado: {estado_acceso}")
         
-        # Emitir evento de actualización en tiempo real con los datos del nuevo registro
-        nuevo_registro = {
-            'cedula': cedula_usuario,
-            # Asegúrate de obtener o definir los siguientes campos:
-            'nombre': 'Nombre del usuario',     # Por ejemplo, extraído de la consulta o asignado
-            'apellido': 'Apellido del usuario', # Igual que el anterior
-            'fecha': fecha_actual,
-            'hora': hora_actual,
-            'estado': estado_acceso,
-            'uid_tarjeta': uid
-        }
-        socketio.emit('new_rfid_record', nuevo_registro)
     except mysql.connector.Error as error:
         print(f"Error al guardar datos RFID: {error}")
 
@@ -284,13 +270,7 @@ try:
                     # Guardar la temperatura en la tabla adecuada
                     guardar_temperatura(temperatura)
 
-                    # Solo guardar el primer registro cuando el gas supera el umbral
-                    if gas > umbral_gas:
-                        if not gas_superado:  # Solo registrar si no se ha registrado antes
-                            guardar_datos_gas(gas, umbral_gas)
-                            gas_superado = True
-                    else:
-                        gas_superado = False  # Reinicia la bandera si vuelve a valores normales
+                    guardar_datos_gas(gas)  #guardar datos gas
 
                     # Guardar los datos de voltaje y corriente
                     guardar_datos_electricos(voltaje, corriente, cursor, db_connection)

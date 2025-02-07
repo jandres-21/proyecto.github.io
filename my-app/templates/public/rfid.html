@@ -13,7 +13,7 @@
     <!-- Botón para generar Excel (solo visible para rol 1) -->
     {% if dataLogin.rol == 1 %}
     <div class="text-center mb-4">
-      <button id="btnExportarExcel" class="btn btn-primary">Generar Excel</button>
+      <button id="btnExportarExcel" class="btn btn-info">Generar Excel</button>
     </div>
     {% endif %}
 
@@ -120,6 +120,62 @@
     updateTablePagination();
     renderPaginationControls();
 
+    // Funcionalidad para mostrar/ocultar el UID de la tarjeta
+    document.addEventListener("click", function(event) {
+      if (event.target.closest(".toggle-uid")) {
+        const btn = event.target.closest(".toggle-uid");
+        const input = btn.parentElement.querySelector(".uid-tarjeta");
+        if (input) {
+          if (input.type === "password") {
+            input.type = "text";
+            btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+          } else {
+            input.type = "password";
+            btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+          }
+        }
+      }
+    });
+
+    // Funcionalidad para generar Excel con todos los registros
+    document.getElementById('btnExportarExcel').addEventListener('click', function () {
+      const table = document.getElementById('tablaRFID');
+      const data = [];
+      
+      // Obtener la fila de encabezado
+      const headerCells = table.querySelector('thead tr').cells;
+      const headerRow = [];
+      for (let i = 0; i < headerCells.length; i++) {
+        headerRow.push(headerCells[i].innerText.trim());
+      }
+      data.push(headerRow);
+      
+      // Recorrer todas las filas del cuerpo de la tabla (sin importar la paginación)
+      const bodyRows = table.querySelectorAll('tbody tr');
+      bodyRows.forEach(row => {
+        const rowData = [];
+        const cells = row.cells;
+        for (let i = 0; i < cells.length; i++) {
+          // Si la celda contiene un input con clase "uid-tarjeta", asignar "*******"
+          if (cells[i].querySelector('.uid-tarjeta')) {
+            rowData.push("*******");
+          } else {
+            rowData.push(cells[i].innerText.trim());
+          }
+        }
+        data.push(rowData);
+      });
+      
+      // Crear la hoja de cálculo y el libro usando XLSX
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+      
+      // Descargar el archivo Excel con el nombre "log_accesos.xlsx"
+      XLSX.writeFile(wb, 'log_accesos.xlsx');
+    });
+
+    // Socket.IO: actualizar la tabla en tiempo real
     const socket = io();
     socket.on('new_rfid_record', function(data) {
       const tbody = document.getElementById('tablaRFID').querySelector('tbody');
@@ -135,6 +191,16 @@
         <td>${data.fecha}</td>
         <td>${data.hora}</td>
         <td class="fw-bold text-center" style="color: ${data.estado === 'denegado' ? 'red' : 'green'}">${data.estado}</td>
+        {% if dataLogin.rol == 1 %}
+        <td>
+          <div class="input-group">
+            <input type="password" class="form-control uid-tarjeta" value="${data.uid_tarjeta}" readonly style="max-width: 120px;">
+            <button class="btn btn-outline-secondary toggle-uid" type="button">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </td>
+        {% endif %}
       </tr>`;
       tbody.insertAdjacentHTML('afterbegin', row);
       updateTablePagination();
